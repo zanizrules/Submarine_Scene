@@ -18,8 +18,8 @@ public class Submarine implements Drawable {
     private final ColourRGB SUBMARINE_SECONDARY = new ColourRGB(1,0.05f,0);
 
     private SubmarineComponent root;
-    public double x, y, z;
-    private double propellerRotation, submarineRotation;
+    double x, y, z, submarineRotation;
+    private double propellerRotation;
     private SUBMARINE_STATE state;
 
     Submarine(float size) {
@@ -86,15 +86,15 @@ public class Submarine implements Drawable {
                         // TODO: fix
                         propellerRotation *= -1.0;
                     }
-                    // x =
-                    // z = TODO: implement
+                    x += MOVEMENT_SPEED * Math.sin(Math.toRadians(submarineRotation));
+                    z += MOVEMENT_SPEED * Math.cos(Math.toRadians(submarineRotation));
                 } else if(state.equals(SUBMARINE_STATE.MOVING_BACKWARD)) {
                     if(propellerRotation > 0) {
                         // TODO: fix
                         propellerRotation *= -1.0;
                     }
-                    // x =
-                    // z =
+                    x -= MOVEMENT_SPEED * Math.sin(Math.toRadians(submarineRotation));
+                    z -= MOVEMENT_SPEED * Math.cos(Math.toRadians(submarineRotation));
                 } else if(state.equals(SUBMARINE_STATE.TURNING_LEFT)) {
                     submarineRotation -= ROTATION_SPEED;
                 } else if(state.equals(SUBMARINE_STATE.TURNING_RIGHT)) {
@@ -103,8 +103,8 @@ public class Submarine implements Drawable {
             }
         }
 
-        gl2.glRotated(submarineRotation, 0, 1, 0);
         gl2.glTranslated(x, y, z);
+        gl2.glRotated(submarineRotation, 0, 1, 0);
         root.draw(gl2, glu, quadric, filled);
         gl2.glPopMatrix();
     }

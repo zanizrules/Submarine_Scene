@@ -48,8 +48,12 @@ public class Renderer implements GLEventListener, KeyListener {
 		// Set viewpoint depending on user input
 
 		// Setup camera
-		glu.gluLookAt(submarine.x, submarine.y+3, submarine.z-6,
-				submarine.x, submarine.y, submarine.z,
+
+		glu.gluLookAt(submarine.x - 6*Math.sin(Math.toRadians(submarine.submarineRotation)),
+				submarine.y+3,
+				submarine.z - 6*Math.cos(Math.toRadians(submarine.submarineRotation)),
+
+				submarine.x, submarine.y, submarine.z, // TODO: change to take in to account the angle
 				0.0, 1.0, 0.0);
 
 		// Draw origin locator
