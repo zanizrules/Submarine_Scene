@@ -28,9 +28,10 @@ public class Renderer implements GLEventListener, KeyListener {
 	private Origin locator;
 	private Grid seaBed, seaSurface;
 	private Submarine submarine;
+	private double camX, camY, camZ;
 
-	private static final double FIELD_OF_VIEW = 55, NEAR_CLIPPING = 0.1, FAR_CLIPPING = 50;
-	public static final float SEA_HEIGHT = 10;
+	private static final double FIELD_OF_VIEW = 30, NEAR_CLIPPING = 0.1, FAR_CLIPPING = 50;
+	static final float SEA_HEIGHT = 10;
 
 	private static final ColourRGB SEABED_COLOUR = new ColourRGB(0.66f,0.47f, 0.37f);
 	private static final ColourRGB SEASURFACE_COLOUR = new ColourRGB(0.13f,0.7f, 0.67f, 0.5f);
@@ -48,12 +49,11 @@ public class Renderer implements GLEventListener, KeyListener {
 		// Set viewpoint depending on user input
 
 		// Setup camera
-
-		glu.gluLookAt(submarine.x - 6*Math.sin(Math.toRadians(submarine.submarineRotation)),
-				submarine.y+3,
-				submarine.z - 6*Math.cos(Math.toRadians(submarine.submarineRotation)),
-
-				submarine.x, submarine.y, submarine.z, // TODO: change to take in to account the angle
+		camX = submarine.x - 6 * Math.sin(Math.toRadians(submarine.submarineRotation));
+		camY = submarine.y+3;
+		camZ = submarine.z - 6 * Math.cos(Math.toRadians(submarine.submarineRotation));
+		glu.gluLookAt(camX, camY, camZ, // Camera positioned behind the submarine
+				submarine.x, submarine.y, submarine.z, // Focus on the centre of the submarine
 				0.0, 1.0, 0.0);
 
 		// Draw origin locator
@@ -64,15 +64,14 @@ public class Renderer implements GLEventListener, KeyListener {
 		glu.gluQuadricDrawStyle(quadric, style);
 
 		// Draw everything here
-		gl.glEnable(GL_BLEND);
+		gl.glEnable(GL_BLEND); // Blending required for Sea surface
 		gl.glBlendFunc(GL_SRC_ALPHA, GL2.GL_ONE_MINUS_SRC_ALPHA);
 
 		seaBed.draw(gl, glu, quadric, filled);
 		submarine.draw(gl, glu, quadric, filled);
-
 		seaSurface.draw(gl, glu, quadric, filled);
-		gl.glDisable(GL_BLEND);
 
+		gl.glDisable(GL_BLEND);
 		gl.glFlush();
 	}
 
@@ -90,7 +89,6 @@ public class Renderer implements GLEventListener, KeyListener {
 		quadric = glu.gluNewQuadric();
 		locator = new Origin();
 		submarine = new Submarine(1);
-
 		seaBed = new Grid(SEABED_COLOUR, -SEA_HEIGHT/2);
 		seaSurface = new Grid(SEASURFACE_COLOUR, SEA_HEIGHT/2);
 
@@ -116,7 +114,6 @@ public class Renderer implements GLEventListener, KeyListener {
 		gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_AMBIENT, ambient, 0);
 		gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_DIFFUSE, diffuse, 0);
 		gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_SPECULAR, specular, 0);
-
 		gl.glEnable(GL2.GL_LIGHTING);
 		gl.glEnable(GL2.GL_LIGHT0);
 		gl.glEnable(GL2.GL_LIGHT1);
@@ -138,6 +135,32 @@ public class Renderer implements GLEventListener, KeyListener {
 		gl.glMatrixMode(GL2.GL_MODELVIEW); // Return to model view matrix
 	}
 
+	private static void printControls() {
+		System.out.println("---Key Mappings---\n");
+		System.out.println("Submarine Controls:");
+		System.out.println("UP ARROW: Surface (Decrease Depth)");
+		System.out.println("DOWN ARROW: Dive (Increase Depth)");
+		System.out.println("W: Move forward");
+		System.out.println("S: Move backward");
+		System.out.println("A: Turn left");
+		System.out.println("D: Turn right\n");
+
+		System.out.println("Other Controls:");
+		System.out.println("L: Toggle Wireframe Mode (On/Off)");
+	}
+
+	private void printInformation() {
+		System.out.println("\n--- Submarine ---");
+		System.out.println("Submarine Location (X, Y, Z): (" + submarine.x + ", " + submarine.y + ", " + submarine.z + ")");
+		System.out.println("Submarine Rotation Angle: " + submarine.submarineRotation);
+		System.out.println("Submarine Propeller Rotation Angle: " + submarine.propellerRotation);
+		System.out.println("\n--- Camera ---");
+		System.out.println("Camera Location: (X, Y, Z): (" + camX + ", " + camY + ", " + camZ + ")");
+		System.out.println("\n--- Other ---");
+		System.out.println("Sea Depth: " + (Math.abs(seaBed.height) + Math.abs(seaSurface.height)));
+		System.out.println(filled ? "Wireframe Mode: Off" : "Wireframe Mode: On");
+	}
+
 	public static void main(String[] args) {
 		Frame frame = new Frame("Submarine Build");
 		GLCanvas canvas = new GLCanvas();
@@ -148,7 +171,7 @@ public class Renderer implements GLEventListener, KeyListener {
 
 		frame.add(canvas);
 
-		frame.setSize(500, 500);
+		frame.setSize(750, 750);
 		final FPSAnimator animator = new FPSAnimator(canvas, 60);
 		frame.addWindowListener(new WindowAdapter() {
 			@Override
@@ -166,11 +189,11 @@ public class Renderer implements GLEventListener, KeyListener {
 		frame.setVisible(true);
 
 		animator.start();
+		printControls();
 	}
 
 	private void toggleRenderingStyle() {
 		filled = !filled;
-		System.out.println(filled ? "Wireframe: Off" : "Wireframe: On");
 	}
 
 	@Override
@@ -200,6 +223,8 @@ public class Renderer implements GLEventListener, KeyListener {
 
 		if(key == KeyEvent.VK_L) {
 			toggleRenderingStyle();
+		} else if(key == KeyEvent.VK_I) {
+			printInformation();
 		} else if (key == KeyEvent.VK_A | key == KeyEvent.VK_D | key == KeyEvent.VK_W | key == KeyEvent.VK_S
 				| key == KeyEvent.VK_UP | key == KeyEvent.VK_DOWN) {
 			submarine.changeState(SUBMARINE_STATE.IDLE);

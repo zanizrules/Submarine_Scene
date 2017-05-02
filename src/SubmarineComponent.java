@@ -8,7 +8,8 @@ import java.util.LinkedList;
  * Author: Shane Birdsall
  * ID: 14870204
  * Date: 25/04/2017.
- * This abstract class was created to be used in a linked tree structure to allow for hierarchical models.
+ * This abstract class was created to be used as the nodes in a linked tree structure to
+ * allow for a hierarchical submarine model to be created.
  */
 public abstract class SubmarineComponent implements Drawable {
     private LinkedList<SubmarineComponent> children;
@@ -56,8 +57,6 @@ public abstract class SubmarineComponent implements Drawable {
         }
     }
 
-    abstract void drawNode(GL2 gl2, GLU glu, GLUquadric quadric, boolean filled);
-
     void setTranslations(double x, double y, double z) {
         transX = x;
         transY = y;
@@ -67,4 +66,6 @@ public abstract class SubmarineComponent implements Drawable {
     void setRotation(double theta) {
         rotationAngle = theta;
     }
+
+    abstract void drawNode(GL2 gl2, GLU glu, GLUquadric quadric, boolean filled);
 }
