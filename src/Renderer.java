@@ -7,10 +7,7 @@ import com.jogamp.opengl.glu.GLUquadric;
 import com.jogamp.opengl.util.FPSAnimator;
 
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 
 import static com.jogamp.opengl.GL.GL_BLEND;
 import static com.jogamp.opengl.GL.GL_SRC_ALPHA;
@@ -187,6 +184,15 @@ public class Renderer implements GLEventListener, KeyListener {
 		// Center frame
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
+
+		// Maintain 1:1 ratio
+		frame.addComponentListener(new ComponentAdapter() {
+			public void componentResized(ComponentEvent evt) {
+				Component c = (Component)evt.getSource();
+				c.setSize(c.getWidth(), c.getWidth());
+				frame.setSize(frame.getWidth(), frame.getWidth());
+			}
+		});
 
 		animator.start();
 		printControls();

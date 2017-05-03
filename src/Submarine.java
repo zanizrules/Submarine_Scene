@@ -14,7 +14,7 @@ import com.jogamp.opengl.util.gl2.GLUT;
 public class Submarine implements Drawable {
 
     private final double SUBMARINE_RADIUS, SUBMARINE_HEIGHT;
-    private static final double ROTATION_SPEED = 2, PROPELLER_ROTATION_SPEED = 10,MOVEMENT_SPEED = 0.1;
+    private static final double ROTATION_SPEED = 1, PROPELLER_ROTATION_SPEED = 6,MOVEMENT_SPEED = 0.1;
     private static final ColourRGB SUBMARINE_PRIMARY = new ColourRGB(1,0.2f,0);
     private static final ColourRGB SUBMARINE_SECONDARY = new ColourRGB(1,0.05f,0);
 
