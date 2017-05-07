@@ -13,25 +13,30 @@ public class Grid implements Drawable {
     private ColourRGB gridColour;
     float height; // Grid location in the Y axis
 
-    // GRID_SIZE is 1;
-    private static final int GRID_SIZE = 50; // 50 1x1 squares
+    // each individual grid is 1 unit;
+    private int gridSize; // if 50 then there are 50 1x1 squares
 
     Grid(ColourRGB colour, float yPos) {
+        this(colour, yPos, 50);
+    }
+
+    Grid(ColourRGB colour, float yPos, int gridSize) {
         gridColour = colour;
         height = yPos;
+        this.gridSize = gridSize;
     }
 
     @Override
     public void draw(GL2 gl2, GLU glu, GLUquadric quadric, boolean filled) {
         gl2.glColor4f(gridColour.RED, gridColour.GREEN, gridColour.BLUE, gridColour.ALPHA);
 
-        /* There are four equal sections in each 2D grid, and as such I have used GRID_SIZE
+        /* There are four equal sections in each 2D grid, and as such I have used gridSize
            to represent the length of a single quadrant. The entire grid is constructed by
-           starting at negative GRID_SIZE and ending at positive GRID_SIZE.
+           starting at negative gridSize and ending at positive gridSize.
            For example, if using a grid size of 2 then start at -2 and go to +2.
            Note: (Resulting square will be 4x4) for that example*/
-        for(int i = -GRID_SIZE; i < GRID_SIZE; i++) {
-            for(int j = -GRID_SIZE; j < GRID_SIZE; j++) {
+        for(int i = -gridSize; i < gridSize; i++) {
+            for(int j = -gridSize; j < gridSize; j++) {
                 gl2.glBegin(filled ? GL2.GL_QUADS : GL2.GL_LINE_LOOP); // Solid or Wireframe
                     gl2.glNormal3d(0,1,0);
                     gl2.glVertex3d(i,height,j);

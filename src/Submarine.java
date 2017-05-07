@@ -14,13 +14,17 @@ import com.jogamp.opengl.util.gl2.GLUT;
 public class Submarine implements Drawable {
 
     private final double SUBMARINE_RADIUS, SUBMARINE_HEIGHT;
-    private static final double ROTATION_SPEED = 1, PROPELLER_ROTATION_SPEED = 6,MOVEMENT_SPEED = 0.1;
+    private static final double ROTATION_SPEED = 1, PROPELLER_ROTATION_SPEED = 6, MOVEMENT_SPEED = 0.1, TILT_AMOUNT = 20;
     private static final ColourRGB SUBMARINE_PRIMARY = new ColourRGB(1,0.2f,0);
     private static final ColourRGB SUBMARINE_SECONDARY = new ColourRGB(1,0.05f,0);
 
     private SubmarineComponent root;
     double x, y, z, submarineRotation, propellerRotation;
-    private SUBMARINE_STATE state;
+    float[] spotLightDirection = {0, 0, 0};
+    private SUBMARINE_STATE turningState;
+    private SUBMARINE_STATE verticalMovementState;
+    private SUBMARINE_STATE horizontalMovementState;
+
     private boolean rotateRight; // Used to determine which way the propeller should rotate
 
     Submarine(float size) {
@@ -31,7 +35,10 @@ public class Submarine implements Drawable {
         z = 0;
         propellerRotation = 0;
         submarineRotation = 0;
-        state = SUBMARINE_STATE.IDLE;
+        //spotLightDirection = new float[3];
+        turningState = SUBMARINE_STATE.IDLE;
+        verticalMovementState = SUBMARINE_STATE.IDLE;
+        horizontalMovementState = SUBMARINE_STATE.IDLE;
 
         root = new SubmarineBody(SUBMARINE_RADIUS, SUBMARINE_HEIGHT, ROTATION_AXIS.X);
 
@@ -69,8 +76,16 @@ public class Submarine implements Drawable {
         root.addChild(connector);
     }
 
-    void changeState(SUBMARINE_STATE state) {
-        this.state = state; // Change the state of the Submarine to determine how it should be animated
+    void changeTurningState(SUBMARINE_STATE state) {
+        turningState = state; // Left/Right/Idle
+    }
+
+    void changeVerticalMovementState(SUBMARINE_STATE state) {
+        verticalMovementState = state; // Up/Down/Idle
+    }
+
+    void changeHorizontalMovementState(SUBMARINE_STATE state) {
+        horizontalMovementState = state; // Forward/Backward/Idle
     }
 
     @Override
@@ -78,137 +93,159 @@ public class Submarine implements Drawable {
         submarineRotation = submarineRotation % 360; // Reset angles to within 0-360
         propellerRotation = propellerRotation % 360;
         gl2.glPushMatrix();
-        if(!state.equals(SUBMARINE_STATE.IDLE)) { // Only bother checking if the Submarine is in a non-idle state
-            if(state.equals(SUBMARINE_STATE.DIVING)) { // Handle diving movement
-                if(y > (-Renderer.SEA_HEIGHT/2) + (SUBMARINE_HEIGHT*2)) {
-                    y -= MOVEMENT_SPEED/2;
-                }
-            } else if(state.equals(SUBMARINE_STATE.SURFACING)) { // Handle surfacing movement
-                if(y < (Renderer.SEA_HEIGHT/2) - (SUBMARINE_HEIGHT/2)) {
-                    y += MOVEMENT_SPEED/2;
-                }
-            } else { // All other states require propeller rotation
-                propellerRotation += PROPELLER_ROTATION_SPEED; // Rotate propeller
-                if(state.equals(SUBMARINE_STATE.MOVING_FORWARD)) { // Handle moving forward
-                    rotateRight = true;
-                    x += MOVEMENT_SPEED * Math.sin(Math.toRadians(submarineRotation)); // Move based on current heading
-                    z += MOVEMENT_SPEED * Math.cos(Math.toRadians(submarineRotation));
-                } else if(state.equals(SUBMARINE_STATE.MOVING_BACKWARD)) { // Handle moving backwards
-                    rotateRight = false;
-                    x -= MOVEMENT_SPEED * Math.sin(Math.toRadians(submarineRotation)); // Move based on current heading
-                    z -= MOVEMENT_SPEED * Math.cos(Math.toRadians(submarineRotation));
-                } else if(state.equals(SUBMARINE_STATE.TURNING_LEFT)) { // Handle left turn
-                    rotateRight = true;
-                    submarineRotation += ROTATION_SPEED;
-                } else if(state.equals(SUBMARINE_STATE.TURNING_RIGHT)) { // Handle right turn
-                    rotateRight = false;
-                    submarineRotation -= ROTATION_SPEED;
-                }
-            }
-        }
-
+        animateSubmarine();
         gl2.glTranslated(x, y, z); // Translate based on x,y,z determined above
         gl2.glRotated(90 + submarineRotation, 0, 1, 0); // rotate based on angle determined above
+        if(turningState == SUBMARINE_STATE.TURNING_LEFT) {
+            gl2.glRotated(TILT_AMOUNT, 1, 0, 0);
+        } else if(turningState == SUBMARINE_STATE.TURNING_RIGHT) {
+            gl2.glRotated(-TILT_AMOUNT, 1, 0, 0);
+        }
+        if(verticalMovementState == SUBMARINE_STATE.SURFACING) {
+            gl2.glRotated(-TILT_AMOUNT, 0, 0, 1);
+        } else if(verticalMovementState == SUBMARINE_STATE.DIVING) {
+            gl2.glRotated(TILT_AMOUNT, 0, 0, 1);
+        }
+
         root.draw(gl2, glu, quadric, filled); // Draw root node, which draws all child nodes
         gl2.glPopMatrix();
     }
 
-    private class SubmarineBody extends SubmarineComponent {
+    // Manipulates the submarines values to determine how it should move
+    private void animateSubmarine() {
 
-        SubmarineBody(double radius, double height, ROTATION_AXIS axis) {
-            super(radius, height, axis);
-        }
-
-        @Override
-        void drawNode (GL2 gl2, GLU glu, GLUquadric quadric, boolean filled){
-            gl2.glPushMatrix();
-            gl2.glColor3f(SUBMARINE_PRIMARY.RED,SUBMARINE_PRIMARY.GREEN,SUBMARINE_PRIMARY.BLUE);
-            gl2.glScaled(radius, height, height);
-            glu.gluSphere(quadric,1,25,20);
-            gl2.glPopMatrix();
-        }
-    }
-
-    private class SubmarineConnector extends SubmarineComponent {
-
-        private GLUT glut;
-
-        SubmarineConnector(double radius, double height, ROTATION_AXIS axis) {
-            super(radius, height, axis);
-            glut = new GLUT();
-        }
-
-        @Override
-        void drawNode(GL2 gl2, GLU glu, GLUquadric quadric, boolean filled) {
-            gl2.glPushMatrix();
-            // Draw Cylinder
-            gl2.glColor3f(SUBMARINE_SECONDARY.RED,SUBMARINE_SECONDARY.GREEN,SUBMARINE_SECONDARY.BLUE);
-            gl2.glScaled(height/5, height/5, radius/4);
-            glu.gluCylinder(quadric, 1, 1, 1, 5, 5);
-
-            // Draw Cone
-            gl2.glTranslated(0, 0, height*3); // Move
-            gl2.glColor3f(1,0.25f,0);
-            if(filled) {
-                glut.glutSolidCone(1.5f,0.75f,5,5);
-            } else {
-                glut.glutWireCone(1.5f,0.75f,5,5);
+        // Vertical Movement
+        if(verticalMovementState.equals(SUBMARINE_STATE.DIVING)) { // Handle diving movement
+            if(y > (-Renderer.SEA_HEIGHT/2) + (SUBMARINE_HEIGHT*2)) {
+                y -= MOVEMENT_SPEED/2;
             }
-            gl2.glPopMatrix();
-        }
-    }
-
-    private class SubmarinePeriscope extends SubmarineComponent {
-
-        SubmarinePeriscope(double radius, double height, ROTATION_AXIS axis) {
-            super(radius, height, axis);
-        }
-
-        @Override
-        void drawNode (GL2 gl2, GLU glu, GLUquadric quadric, boolean filled){
-            gl2.glPushMatrix();
-            gl2.glColor3f(SUBMARINE_PRIMARY.RED,SUBMARINE_PRIMARY.GREEN + 0.05f,SUBMARINE_PRIMARY.BLUE);
-            gl2.glScaled(radius/15, radius/15, height/2);
-            glu.gluCylinder(quadric, 1, 1, 1,8, 6);
-            gl2.glPopMatrix();
-        }
-    }
-
-    private class SubmarinePropeller extends SubmarineComponent {
-
-        SubmarinePropeller(double radius, double height, ROTATION_AXIS axis) {
-            super(radius, height, axis);
-        }
-
-        @Override
-        void drawNode(GL2 gl2, GLU glu, GLUquadric quadric, boolean filled) {
-            gl2.glPushMatrix();
-            gl2.glColor3f(SUBMARINE_PRIMARY.RED,SUBMARINE_PRIMARY.GREEN + 0.05f,SUBMARINE_PRIMARY.BLUE);
-            gl2.glRotated(90, 1, 0, 0);
-            if(rotateRight) {
-                gl2.glRotated(propellerRotation, 0, 1, 0);
-            } else {
-                gl2.glRotated(-propellerRotation, 0, 1, 0);
+        } else if(verticalMovementState.equals(SUBMARINE_STATE.SURFACING)) { // Handle surfacing movement
+            if (y < (Renderer.SEA_HEIGHT / 2) - (SUBMARINE_HEIGHT / 2)) {
+                y += MOVEMENT_SPEED / 2;
             }
-            gl2.glScaled(radius/5, radius/8, 1);
-            glu.gluSphere(quadric, 2*radius/3, 20, 20);
-            gl2.glPopMatrix();
+        } else {
+            if(horizontalMovementState != SUBMARINE_STATE.IDLE || turningState != SUBMARINE_STATE.IDLE) {
+                propellerRotation += PROPELLER_ROTATION_SPEED; // Rotate propeller when turning or moving
+            }
+        }
+
+        // Horizontal Movement
+        if (horizontalMovementState.equals(SUBMARINE_STATE.MOVING_FORWARD)) { // Handle moving forward
+            rotateRight = true;
+            x += MOVEMENT_SPEED * Math.sin(Math.toRadians(submarineRotation)); // Move based on current heading
+            z += MOVEMENT_SPEED * Math.cos(Math.toRadians(submarineRotation));
+        } else if (horizontalMovementState.equals(SUBMARINE_STATE.MOVING_BACKWARD)) { // Handle moving backwards
+            rotateRight = false;
+            x -= MOVEMENT_SPEED * Math.sin(Math.toRadians(submarineRotation)); // Move based on current heading
+            z -= MOVEMENT_SPEED * Math.cos(Math.toRadians(submarineRotation));
+        }
+
+        // Turning Movement
+        if(turningState.equals(SUBMARINE_STATE.TURNING_LEFT)) { // Handle left turn
+            rotateRight = true;
+            submarineRotation += ROTATION_SPEED;
+        } else if(turningState.equals(SUBMARINE_STATE.TURNING_RIGHT)) { // Handle right turn
+            rotateRight = false;
+            submarineRotation -= ROTATION_SPEED;
         }
     }
 
-    private class SubmarineSail extends SubmarineComponent {
+private class SubmarineBody extends SubmarineComponent {
 
-        SubmarineSail(double radius, double height, ROTATION_AXIS axis) {
-            super(radius, height, axis);
-        }
-
-        @Override
-        void drawNode (GL2 gl2, GLU glu, GLUquadric quadric, boolean filled) {
-            gl2.glPushMatrix();
-            gl2.glColor3f(SUBMARINE_PRIMARY.RED,SUBMARINE_PRIMARY.GREEN,SUBMARINE_PRIMARY.BLUE);
-            gl2.glScaled(radius, height, height);
-            glu.gluCylinder(quadric, radius, radius/1.5f, height*2,4, 4);
-            gl2.glPopMatrix();
-        }
+    SubmarineBody(double radius, double height, ROTATION_AXIS axis) {
+        super(radius, height, axis);
     }
+
+    @Override
+    void drawNode (GL2 gl2, GLU glu, GLUquadric quadric, boolean filled){
+        gl2.glPushMatrix();
+        gl2.glColor3f(SUBMARINE_PRIMARY.RED,SUBMARINE_PRIMARY.GREEN,SUBMARINE_PRIMARY.BLUE);
+        gl2.glScaled(radius, height, height);
+        glu.gluSphere(quadric,1,25,20);
+        gl2.glPopMatrix();
+    }
+}
+
+private class SubmarineConnector extends SubmarineComponent {
+
+    private GLUT glut;
+
+    SubmarineConnector(double radius, double height, ROTATION_AXIS axis) {
+        super(radius, height, axis);
+        glut = new GLUT();
+    }
+
+    @Override
+    void drawNode(GL2 gl2, GLU glu, GLUquadric quadric, boolean filled) {
+        gl2.glPushMatrix();
+        // Draw Cylinder
+        gl2.glColor3f(SUBMARINE_SECONDARY.RED,SUBMARINE_SECONDARY.GREEN,SUBMARINE_SECONDARY.BLUE);
+        gl2.glScaled(height/5, height/5, radius/4);
+        glu.gluCylinder(quadric, 1, 1, 1, 5, 5);
+
+        // Draw Cone
+        gl2.glTranslated(0, 0, height*3); // Move
+        gl2.glColor3f(1,0.25f,0);
+        if(filled) {
+            glut.glutSolidCone(1.5f,0.75f,5,5);
+        } else {
+            glut.glutWireCone(1.5f,0.75f,5,5);
+        }
+        gl2.glPopMatrix();
+    }
+}
+
+private class SubmarinePeriscope extends SubmarineComponent {
+
+    SubmarinePeriscope(double radius, double height, ROTATION_AXIS axis) {
+        super(radius, height, axis);
+    }
+
+    @Override
+    void drawNode (GL2 gl2, GLU glu, GLUquadric quadric, boolean filled){
+        gl2.glPushMatrix();
+        gl2.glColor3f(SUBMARINE_PRIMARY.RED,SUBMARINE_PRIMARY.GREEN + 0.05f,SUBMARINE_PRIMARY.BLUE);
+        gl2.glScaled(radius/15, radius/15, height/2);
+        glu.gluCylinder(quadric, 1, 1, 1,8, 6);
+        gl2.glPopMatrix();
+    }
+}
+
+private class SubmarinePropeller extends SubmarineComponent {
+
+    SubmarinePropeller(double radius, double height, ROTATION_AXIS axis) {
+        super(radius, height, axis);
+    }
+
+    @Override
+    void drawNode(GL2 gl2, GLU glu, GLUquadric quadric, boolean filled) {
+        gl2.glPushMatrix();
+        gl2.glColor3f(SUBMARINE_PRIMARY.RED,SUBMARINE_PRIMARY.GREEN + 0.05f,SUBMARINE_PRIMARY.BLUE);
+        gl2.glRotated(90, 1, 0, 0);
+        if(rotateRight) {
+            gl2.glRotated(propellerRotation, 0, 1, 0);
+        } else {
+            gl2.glRotated(-propellerRotation, 0, 1, 0);
+        }
+        gl2.glScaled(radius/5, radius/8, 1);
+        glu.gluSphere(quadric, 2*radius/3, 20, 20);
+        gl2.glPopMatrix();
+    }
+}
+
+private class SubmarineSail extends SubmarineComponent {
+
+    SubmarineSail(double radius, double height, ROTATION_AXIS axis) {
+        super(radius, height, axis);
+    }
+
+    @Override
+    void drawNode (GL2 gl2, GLU glu, GLUquadric quadric, boolean filled) {
+        gl2.glPushMatrix();
+        gl2.glColor3f(SUBMARINE_PRIMARY.RED,SUBMARINE_PRIMARY.GREEN,SUBMARINE_PRIMARY.BLUE);
+        gl2.glScaled(radius, height, height);
+        glu.gluCylinder(quadric, radius, radius/1.5f, height*2,4, 4);
+        gl2.glPopMatrix();
+    }
+}
 }

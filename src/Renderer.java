@@ -89,6 +89,8 @@ public class Renderer implements GLEventListener, KeyListener {
 		seaBed = new Grid(SEABED_COLOUR, -SEA_HEIGHT/2);
 		seaSurface = new Grid(SEASURFACE_COLOUR, SEA_HEIGHT/2);
 
+
+
 		// Enable lighting
 		lights(gl);
 
@@ -102,15 +104,21 @@ public class Renderer implements GLEventListener, KeyListener {
 		float diffuse[] = { 1, 1, 1, 1 };
 		float specular[] = { 1, 1, 1, 1 };
 		float position0[] = { 1, 1, 1, 0 };
+
 		gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_POSITION, position0, 0);
 		gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_AMBIENT, ambient, 0);
 		gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_DIFFUSE, diffuse, 0);
 		gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_SPECULAR, specular, 0);
+		gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_SPOT_DIRECTION, submarine.spotLightDirection, 0);
+		gl.glLightf(GL2.GL_LIGHT0, GL2.GL_SPOT_CUTOFF, 45); // 45 = cutoff angle
+		// TODO: look
+
 		float position1[] = { -1, -1, -1, 0 };
 		gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_POSITION, position1, 0);
 		gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_AMBIENT, ambient, 0);
 		gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_DIFFUSE, diffuse, 0);
 		gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_SPECULAR, specular, 0);
+
 		gl.glEnable(GL2.GL_LIGHTING);
 		gl.glEnable(GL2.GL_LIGHT0);
 		gl.glEnable(GL2.GL_LIGHT1);
@@ -137,10 +145,10 @@ public class Renderer implements GLEventListener, KeyListener {
 		System.out.println("Submarine Controls:");
 		System.out.println("UP ARROW: Surface (Decrease Depth)");
 		System.out.println("DOWN ARROW: Dive (Increase Depth)");
-		System.out.println("W: Move forward");
-		System.out.println("S: Move backward");
-		System.out.println("A: Turn left");
-		System.out.println("D: Turn right\n");
+		System.out.println("W: Move forward with pitch");
+		System.out.println("S: Move backward with pitch");
+		System.out.println("A: Strafe left with roll");
+		System.out.println("D: Strafe right with roll\n");
 
 		System.out.println("Other Controls:");
 		System.out.println("L: Toggle Wireframe Mode (On/Off)");
@@ -209,17 +217,17 @@ public class Renderer implements GLEventListener, KeyListener {
 		int key = e.getKeyCode();
 
 		if (key == KeyEvent.VK_A) {
-			submarine.changeState(SUBMARINE_STATE.TURNING_LEFT);
+			submarine.changeTurningState(SUBMARINE_STATE.TURNING_LEFT);
 		} else if(key == KeyEvent.VK_D) {
-			submarine.changeState(SUBMARINE_STATE.TURNING_RIGHT);
+			submarine.changeTurningState(SUBMARINE_STATE.TURNING_RIGHT);
 		} else if (key == KeyEvent.VK_W) {
-			submarine.changeState(SUBMARINE_STATE.MOVING_FORWARD);
+			submarine.changeHorizontalMovementState(SUBMARINE_STATE.MOVING_FORWARD);
 		} else if (key == KeyEvent.VK_S) {
-			submarine.changeState(SUBMARINE_STATE.MOVING_BACKWARD);
+			submarine.changeHorizontalMovementState(SUBMARINE_STATE.MOVING_BACKWARD);
 		} else if(key == KeyEvent.VK_UP) {
-			submarine.changeState(SUBMARINE_STATE.SURFACING);
+			submarine.changeVerticalMovementState(SUBMARINE_STATE.SURFACING);
 		} else if(key == KeyEvent.VK_DOWN) {
-			submarine.changeState(SUBMARINE_STATE.DIVING);
+			submarine.changeVerticalMovementState(SUBMARINE_STATE.DIVING);
 		}
 	}
 
@@ -231,9 +239,12 @@ public class Renderer implements GLEventListener, KeyListener {
 			toggleRenderingStyle();
 		} else if(key == KeyEvent.VK_I) {
 			printInformation();
-		} else if (key == KeyEvent.VK_A | key == KeyEvent.VK_D | key == KeyEvent.VK_W | key == KeyEvent.VK_S
-				| key == KeyEvent.VK_UP | key == KeyEvent.VK_DOWN) {
-			submarine.changeState(SUBMARINE_STATE.IDLE);
+		} else if (key == KeyEvent.VK_A | key == KeyEvent.VK_D) {
+			submarine.changeTurningState(SUBMARINE_STATE.IDLE);
+		} else if(key == KeyEvent.VK_W | key == KeyEvent.VK_S) {
+			submarine.changeHorizontalMovementState(SUBMARINE_STATE.IDLE);
+		} else if(key == KeyEvent.VK_UP | key == KeyEvent.VK_DOWN) {
+			submarine.changeVerticalMovementState(SUBMARINE_STATE.IDLE);
 		}
 	}
 }
