@@ -13,7 +13,8 @@ import com.jogamp.opengl.util.gl2.GLUT;
  */
 public class Submarine implements Drawable {
 
-    private final double SUBMARINE_RADIUS, SUBMARINE_HEIGHT;
+    public final double SUBMARINE_RADIUS;
+    private final double SUBMARINE_HEIGHT;
     private static final double ROTATION_SPEED = 1, PROPELLER_ROTATION_SPEED = 6, MOVEMENT_SPEED = 0.1, TILT_AMOUNT = 20;
     private static final ColourRGB SUBMARINE_PRIMARY = new ColourRGB(1,0.2f,0);
     private static final ColourRGB SUBMARINE_SECONDARY = new ColourRGB(1,0.05f,0);
@@ -42,8 +43,8 @@ public class Submarine implements Drawable {
 
         // Spotlight -> Child of root/body
         SubmarineSpotLight spotLight = new SubmarineSpotLight(SUBMARINE_RADIUS, SUBMARINE_HEIGHT, ROTATION_AXIS.Y);
-        spotLight.setRotation(-90);
-        root.addChild(spotLight);
+        //spotLight.setRotation(-90);
+       // root.addChild(spotLight);
 
         // Sail -> Child of root/body
         SubmarineSail sail = new SubmarineSail(SUBMARINE_RADIUS, SUBMARINE_HEIGHT, ROTATION_AXIS.X);
@@ -179,10 +180,11 @@ private class SubmarineBody extends SubmarineComponent {
 
         @Override
         void drawNode (GL2 gl2, GLU glu, GLUquadric quadric, boolean filled){
-            //gl2.glPushMatrix();
-                spotLightPosition[0] = z; //(float) (x -(9f* SUBMARINE_RADIUS)/10f * Math.sin(Math.toRadians(submarineRotation)));
+            gl2.glPushMatrix();
+
+                spotLightPosition[0] = x; //(float) (x -(9f* SUBMARINE_RADIUS)/10f * Math.sin(Math.toRadians(submarineRotation)));
                 spotLightPosition[1] = y;
-                spotLightPosition[2] = x; //(float) (z-(9f* SUBMARINE_RADIUS)/10f * Math.cos(Math.toRadians(submarineRotation)));
+                spotLightPosition[2] = z; //(float) (z-(9f* SUBMARINE_RADIUS)/10f * Math.cos(Math.toRadians(submarineRotation)));
             gl2.glBegin(GL2.GL_LINES);
             gl2.glColor3f(0f, 0f, 1f);
             gl2.glVertex3f(spotLightPosition[0], spotLightPosition[1], spotLightPosition[2]);
@@ -201,7 +203,7 @@ private class SubmarineBody extends SubmarineComponent {
                 // todo add ambient and specular
 
                 gl2.glEnable(GL2.GL_LIGHT2);
-            //gl2.glPopMatrix();
+            gl2.glPopMatrix();
         }
     }
 

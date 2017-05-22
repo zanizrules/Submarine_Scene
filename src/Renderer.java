@@ -53,6 +53,33 @@ public class Renderer implements GLEventListener, KeyListener {
 				submarine.x, submarine.y, submarine.z, // Focus on the centre of the submarine
 				0.0, 1.0, 0.0);
 
+		 float[] spotLightPosition = {0, 0, 0, 1};
+		 float[] spotLightDirection = {0, -1, 0};
+
+		gl.glPushMatrix();
+
+		spotLightPosition[0] = (float) (submarine.x -(9f* submarine.SUBMARINE_RADIUS)/10f * Math.sin(Math.toRadians(submarine.submarineRotation)));
+		spotLightPosition[1] = submarine.y;
+		spotLightPosition[2] = (float) (submarine.z-(9f* submarine.SUBMARINE_RADIUS)/10f * Math.cos(Math.toRadians(submarine.submarineRotation)));
+		gl.glBegin(GL2.GL_LINES);
+		gl.glColor3f(0f, 0f, 1f);
+		gl.glVertex3f(spotLightPosition[0], spotLightPosition[1], spotLightPosition[2]);
+		gl.glVertex3f(spotLightPosition[0], spotLightPosition[1]-1, spotLightPosition[2]);
+		gl.glEnd();
+
+		gl.glLightf(GL2.GL_LIGHT2, GL2.GL_SPOT_CUTOFF, 10); // 45 = cutoff angle
+		gl.glLightfv(GL2.GL_LIGHT2, GL2.GL_POSITION, spotLightPosition, 0); // 0 INDICATES TO START AT POS 0
+		gl.glLightfv(GL2.GL_LIGHT2, GL2.GL_SPOT_DIRECTION, spotLightDirection, 0);
+
+		float diffuse[] = {0.8f, 1, 1, 1};
+		gl.glLightfv(GL2.GL_LIGHT2, GL2.GL_DIFFUSE, diffuse, 0);
+		// todo add ambient and specular
+
+		gl.glEnable(GL2.GL_LIGHT2);
+		gl.glPopMatrix();
+
+
+
 		// Draw origin locator
 		locator.draw(gl, glu, quadric, filled);
 
@@ -173,7 +200,7 @@ public class Renderer implements GLEventListener, KeyListener {
 
 		frame.add(canvas);
 
-		frame.setSize(1500, 1500);
+		frame.setSize(700, 700);
 		final FPSAnimator animator = new FPSAnimator(canvas, 60);
 		frame.addWindowListener(new WindowAdapter() {
 			@Override

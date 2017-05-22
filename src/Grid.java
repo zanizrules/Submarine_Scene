@@ -17,7 +17,7 @@ public class Grid implements Drawable {
     private int gridSize; // if 50 then there are 50 1x1 squares
 
     Grid(ColourRGB colour, float yPos) {
-        this(colour, yPos, 50);
+        this(colour, yPos, 10);
     }
 
     private Grid(ColourRGB colour, float yPos, int gridSize) {
@@ -38,14 +38,18 @@ public class Grid implements Drawable {
         for(int i = -gridSize; i < gridSize; i++) {
             for(int j = -gridSize; j < gridSize; j++) {
                 gl2.glBegin(filled ? GL2.GL_QUADS : GL2.GL_LINE_LOOP); // Solid or Wireframe
+
                     gl2.glNormal3d(0,1,0);
                     gl2.glVertex3d(i,height,j);
                     gl2.glNormal3d(0,1,0);
+
                     gl2.glVertex3d(i + 1,height,j);
                     gl2.glNormal3d(0,1,0);
+
                     gl2.glVertex3d(i + 1,height,j + 1);
                     gl2.glNormal3d(0,1,0);
                     gl2.glVertex3d(i,height,j + 1);
+
                 gl2.glEnd();
             }
         }
