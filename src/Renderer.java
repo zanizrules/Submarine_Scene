@@ -100,18 +100,15 @@ public class Renderer implements GLEventListener, KeyListener {
 	}
 
 	private void lights(GL2 gl) {
-		float ambient[] = { 0, 0, 0, 1 };
-		float diffuse[] = { 1, 1, 1, 1 };
-		float specular[] = { 1, 1, 1, 1 };
-		float position0[] = { 1, 1, 1, 0 };
+		float ambient[] = {0, 0, 0, 1};
+		float diffuse[] = {0.3f, 0.3f, 0.3f, 0.3f};
+		float specular[] = {1, 1, 1, 1};
+		float position0[] = {1, 1, 1, 0};
 
 		gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_POSITION, position0, 0);
 		gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_AMBIENT, ambient, 0);
 		gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_DIFFUSE, diffuse, 0);
 		gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_SPECULAR, specular, 0);
-		gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_SPOT_DIRECTION, submarine.spotLightDirection, 0);
-		gl.glLightf(GL2.GL_LIGHT0, GL2.GL_SPOT_CUTOFF, 45); // 45 = cutoff angle
-		// TODO: look
 
 		float position1[] = { -1, -1, -1, 0 };
 		gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_POSITION, position1, 0);
@@ -176,7 +173,7 @@ public class Renderer implements GLEventListener, KeyListener {
 
 		frame.add(canvas);
 
-		frame.setSize(750, 750);
+		frame.setSize(1500, 1500);
 		final FPSAnimator animator = new FPSAnimator(canvas, 60);
 		frame.addWindowListener(new WindowAdapter() {
 			@Override

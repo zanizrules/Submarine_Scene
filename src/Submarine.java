@@ -19,8 +19,7 @@ public class Submarine implements Drawable {
     private static final ColourRGB SUBMARINE_SECONDARY = new ColourRGB(1,0.05f,0);
 
     private SubmarineComponent root;
-    double x, y, z, submarineRotation, propellerRotation;
-    float[] spotLightDirection = {0, 0, 0};
+    float x, y, z, submarineRotation, propellerRotation;
     private SUBMARINE_STATE turningState;
     private SUBMARINE_STATE verticalMovementState;
     private SUBMARINE_STATE horizontalMovementState;
@@ -35,12 +34,16 @@ public class Submarine implements Drawable {
         z = 0;
         propellerRotation = 0;
         submarineRotation = 0;
-        //spotLightDirection = new float[3];
         turningState = SUBMARINE_STATE.IDLE;
         verticalMovementState = SUBMARINE_STATE.IDLE;
         horizontalMovementState = SUBMARINE_STATE.IDLE;
 
         root = new SubmarineBody(SUBMARINE_RADIUS, SUBMARINE_HEIGHT, ROTATION_AXIS.X);
+
+        // Spotlight -> Child of root/body
+        SubmarineSpotLight spotLight = new SubmarineSpotLight(SUBMARINE_RADIUS, SUBMARINE_HEIGHT, ROTATION_AXIS.Y);
+        spotLight.setRotation(-90);
+        root.addChild(spotLight);
 
         // Sail -> Child of root/body
         SubmarineSail sail = new SubmarineSail(SUBMARINE_RADIUS, SUBMARINE_HEIGHT, ROTATION_AXIS.X);
@@ -115,16 +118,16 @@ public class Submarine implements Drawable {
     private void animateSubmarine() {
 
         // Vertical Movement
-        if(verticalMovementState.equals(SUBMARINE_STATE.DIVING)) { // Handle diving movement
-            if(y > (-Renderer.SEA_HEIGHT/2) + (SUBMARINE_HEIGHT*2)) {
-                y -= MOVEMENT_SPEED/2;
+        if (verticalMovementState.equals(SUBMARINE_STATE.DIVING)) { // Handle diving movement
+            if (y > (-Renderer.SEA_HEIGHT / 2) + (SUBMARINE_HEIGHT * 2)) {
+                y -= MOVEMENT_SPEED / 2;
             }
-        } else if(verticalMovementState.equals(SUBMARINE_STATE.SURFACING)) { // Handle surfacing movement
+        } else if (verticalMovementState.equals(SUBMARINE_STATE.SURFACING)) { // Handle surfacing movement
             if (y < (Renderer.SEA_HEIGHT / 2) - (SUBMARINE_HEIGHT / 2)) {
                 y += MOVEMENT_SPEED / 2;
             }
         } else {
-            if(horizontalMovementState != SUBMARINE_STATE.IDLE || turningState != SUBMARINE_STATE.IDLE) {
+            if (horizontalMovementState != SUBMARINE_STATE.IDLE || turningState != SUBMARINE_STATE.IDLE) {
                 propellerRotation += PROPELLER_ROTATION_SPEED; // Rotate propeller when turning or moving
             }
         }
@@ -141,10 +144,10 @@ public class Submarine implements Drawable {
         }
 
         // Turning Movement
-        if(turningState.equals(SUBMARINE_STATE.TURNING_LEFT)) { // Handle left turn
+        if (turningState.equals(SUBMARINE_STATE.TURNING_LEFT)) { // Handle left turn
             rotateRight = true;
             submarineRotation += ROTATION_SPEED;
-        } else if(turningState.equals(SUBMARINE_STATE.TURNING_RIGHT)) { // Handle right turn
+        } else if (turningState.equals(SUBMARINE_STATE.TURNING_RIGHT)) { // Handle right turn
             rotateRight = false;
             submarineRotation -= ROTATION_SPEED;
         }
@@ -165,6 +168,42 @@ private class SubmarineBody extends SubmarineComponent {
         gl2.glPopMatrix();
     }
 }
+
+    private class SubmarineSpotLight extends SubmarineComponent {
+        private float[] spotLightPosition = {0, 0, 0, 1};
+        private float[] spotLightDirection = {0, 0, 0};
+
+        SubmarineSpotLight(double radius, double height, ROTATION_AXIS axis) {
+            super(radius, height, axis);
+        }
+
+        @Override
+        void drawNode (GL2 gl2, GLU glu, GLUquadric quadric, boolean filled){
+            //gl2.glPushMatrix();
+                spotLightPosition[0] = z; //(float) (x -(9f* SUBMARINE_RADIUS)/10f * Math.sin(Math.toRadians(submarineRotation)));
+                spotLightPosition[1] = y;
+                spotLightPosition[2] = x; //(float) (z-(9f* SUBMARINE_RADIUS)/10f * Math.cos(Math.toRadians(submarineRotation)));
+            gl2.glBegin(GL2.GL_LINES);
+            gl2.glColor3f(0f, 0f, 1f);
+            gl2.glVertex3f(spotLightPosition[0], spotLightPosition[1], spotLightPosition[2]);
+            gl2.glVertex3f(spotLightPosition[0], spotLightPosition[1]-5, spotLightPosition[2]);
+            gl2.glEnd();
+                spotLightDirection[0] = 0;// + 10 * (float) Math.sin(Math.toRadians(submarineRotation)); //(float) (x -(12f* SUBMARINE_RADIUS)/10f * Math.sin(Math.toRadians(submarineRotation)));
+                spotLightDirection[1] = -1;
+                spotLightDirection[2] = 0;// + 10 * (float) Math.cos(Math.toRadians(submarineRotation)); //(float) (z - (12f* SUBMARINE_RADIUS)/10f * Math.cos(Math.toRadians(submarineRotation)));
+
+                gl2.glLightf(GL2.GL_LIGHT2, GL2.GL_SPOT_CUTOFF, 10); // 45 = cutoff angle
+                gl2.glLightfv(GL2.GL_LIGHT2, GL2.GL_POSITION, spotLightPosition, 0); // 0 INDICATES TO START AT POS 0
+                gl2.glLightfv(GL2.GL_LIGHT2, GL2.GL_SPOT_DIRECTION, spotLightDirection, 0);
+
+                float diffuse[] = {1, 1, 1, 1};
+                gl2.glLightfv(GL2.GL_LIGHT2, GL2.GL_DIFFUSE, diffuse, 0);
+                // todo add ambient and specular
+
+                gl2.glEnable(GL2.GL_LIGHT2);
+            //gl2.glPopMatrix();
+        }
+    }
 
 private class SubmarineConnector extends SubmarineComponent {
 

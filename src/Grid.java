@@ -20,7 +20,7 @@ public class Grid implements Drawable {
         this(colour, yPos, 50);
     }
 
-    Grid(ColourRGB colour, float yPos, int gridSize) {
+    private Grid(ColourRGB colour, float yPos, int gridSize) {
         gridColour = colour;
         height = yPos;
         this.gridSize = gridSize;
