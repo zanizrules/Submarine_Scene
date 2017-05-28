@@ -13,11 +13,11 @@ import com.jogamp.opengl.util.gl2.GLUT;
  */
 public class Submarine implements Drawable {
 
-    public final double SUBMARINE_RADIUS;
+    private final double SUBMARINE_RADIUS;
     private final double SUBMARINE_HEIGHT;
-    private static final double ROTATION_SPEED = 1, PROPELLER_ROTATION_SPEED = 6, MOVEMENT_SPEED = 0.1, TILT_AMOUNT = 20;
-    private static final ColourRGB SUBMARINE_PRIMARY = new ColourRGB(1,0.2f,0);
-    private static final ColourRGB SUBMARINE_SECONDARY = new ColourRGB(1,0.05f,0);
+    private static final double ROTATION_SPEED = 1, PROPELLER_ROTATION_SPEED = 6, MOVEMENT_SPEED = 0.1, TILT_AMOUNT = 10;
+//    private static final ColourRGB SUBMARINE_PRIMARY = new ColourRGB(1,0.2f,0);
+//    private static final ColourRGB SUBMARINE_SECONDARY = new ColourRGB(1,0.05f,0);
 
     private SubmarineComponent root;
     float x, y, z, submarineRotation, propellerRotation;
@@ -26,6 +26,8 @@ public class Submarine implements Drawable {
     private SUBMARINE_STATE horizontalMovementState;
 
     private boolean rotateRight; // Used to determine which way the propeller should rotate
+    private GLUT glut = new GLUT();
+
 
     Submarine(float size) {
         SUBMARINE_RADIUS = size * 0.4;
@@ -41,10 +43,12 @@ public class Submarine implements Drawable {
 
         root = new SubmarineBody(SUBMARINE_RADIUS, SUBMARINE_HEIGHT, ROTATION_AXIS.X);
 
-        // Spotlight -> Child of root/body
-        SubmarineSpotLight spotLight = new SubmarineSpotLight(SUBMARINE_RADIUS, SUBMARINE_HEIGHT, ROTATION_AXIS.Y);
-        //spotLight.setRotation(-90);
-       // root.addChild(spotLight);
+        // Light -> Child of root/body
+        SubmarineLight light = new SubmarineLight(SUBMARINE_RADIUS, SUBMARINE_HEIGHT, ROTATION_AXIS.Y);
+        light.setTranslations(-SUBMARINE_RADIUS, -5.5 * SUBMARINE_HEIGHT, 0);
+        light.setRotation(90);
+
+        root.addChild(light);
 
         // Sail -> Child of root/body
         SubmarineSail sail = new SubmarineSail(SUBMARINE_RADIUS, SUBMARINE_HEIGHT, ROTATION_AXIS.X);
@@ -163,49 +167,33 @@ private class SubmarineBody extends SubmarineComponent {
     @Override
     void drawNode (GL2 gl2, GLU glu, GLUquadric quadric, boolean filled){
         gl2.glPushMatrix();
-        gl2.glColor3f(SUBMARINE_PRIMARY.RED,SUBMARINE_PRIMARY.GREEN,SUBMARINE_PRIMARY.BLUE);
-        gl2.glScaled(radius, height, height);
-        glu.gluSphere(quadric,1,25,20);
+            Materials.setSubmarinePrimaryMaterial(gl2);
+            gl2.glScaled(radius, height, height);
+            glu.gluSphere(quadric,1,25,20);
         gl2.glPopMatrix();
     }
 }
 
-    private class SubmarineSpotLight extends SubmarineComponent {
-        private float[] spotLightPosition = {0, 0, 0, 1};
-        private float[] spotLightDirection = {0, 0, 0};
-
-        SubmarineSpotLight(double radius, double height, ROTATION_AXIS axis) {
-            super(radius, height, axis);
-        }
-
-        @Override
-        void drawNode (GL2 gl2, GLU glu, GLUquadric quadric, boolean filled){
-            gl2.glPushMatrix();
-
-                spotLightPosition[0] = x; //(float) (x -(9f* SUBMARINE_RADIUS)/10f * Math.sin(Math.toRadians(submarineRotation)));
-                spotLightPosition[1] = y;
-                spotLightPosition[2] = z; //(float) (z-(9f* SUBMARINE_RADIUS)/10f * Math.cos(Math.toRadians(submarineRotation)));
-            gl2.glBegin(GL2.GL_LINES);
-            gl2.glColor3f(0f, 0f, 1f);
-            gl2.glVertex3f(spotLightPosition[0], spotLightPosition[1], spotLightPosition[2]);
-            gl2.glVertex3f(spotLightPosition[0], spotLightPosition[1]-5, spotLightPosition[2]);
-            gl2.glEnd();
-                spotLightDirection[0] = 0;// + 10 * (float) Math.sin(Math.toRadians(submarineRotation)); //(float) (x -(12f* SUBMARINE_RADIUS)/10f * Math.sin(Math.toRadians(submarineRotation)));
-                spotLightDirection[1] = -1;
-                spotLightDirection[2] = 0;// + 10 * (float) Math.cos(Math.toRadians(submarineRotation)); //(float) (z - (12f* SUBMARINE_RADIUS)/10f * Math.cos(Math.toRadians(submarineRotation)));
-
-                gl2.glLightf(GL2.GL_LIGHT2, GL2.GL_SPOT_CUTOFF, 10); // 45 = cutoff angle
-                gl2.glLightfv(GL2.GL_LIGHT2, GL2.GL_POSITION, spotLightPosition, 0); // 0 INDICATES TO START AT POS 0
-                gl2.glLightfv(GL2.GL_LIGHT2, GL2.GL_SPOT_DIRECTION, spotLightDirection, 0);
-
-                float diffuse[] = {1, 1, 1, 1};
-                gl2.glLightfv(GL2.GL_LIGHT2, GL2.GL_DIFFUSE, diffuse, 0);
-                // todo add ambient and specular
-
-                gl2.glEnable(GL2.GL_LIGHT2);
-            gl2.glPopMatrix();
-        }
+private class SubmarineLight extends SubmarineComponent {
+    SubmarineLight(double radius, double height, ROTATION_AXIS axis) {
+        super(radius, height, axis);
     }
+
+    @Override
+    void drawNode(GL2 gl2, GLU glu, GLUquadric quadric, boolean filled) {
+        gl2.glEnable(Lighting.SUBMARINE_SPOTLIGHT);
+        gl2.glPushMatrix();
+            Materials.setSubmarineLightMaterial(gl2);
+            gl2.glRotated(-75,1,0,0);
+            if(filled) {
+                glut.glutSolidCone(radius*1.75, height*5,20,10);
+            } else {
+                glut.glutWireCone(radius*1.75, height*5,20,10);
+            }
+        gl2.glPopMatrix();
+        gl2.glDisable(Lighting.SUBMARINE_SPOTLIGHT);
+    }
+}
 
 private class SubmarineConnector extends SubmarineComponent {
 
@@ -219,19 +207,18 @@ private class SubmarineConnector extends SubmarineComponent {
     @Override
     void drawNode(GL2 gl2, GLU glu, GLUquadric quadric, boolean filled) {
         gl2.glPushMatrix();
-        // Draw Cylinder
-        gl2.glColor3f(SUBMARINE_SECONDARY.RED,SUBMARINE_SECONDARY.GREEN,SUBMARINE_SECONDARY.BLUE);
-        gl2.glScaled(height/5, height/5, radius/4);
-        glu.gluCylinder(quadric, 1, 1, 1, 5, 5);
+            Materials.setSubmarineSecondaryMaterial(gl2);
+            // Draw Cylinder
+            gl2.glScaled(height/5, height/5, radius/4);
+            glu.gluCylinder(quadric, 1, 1, 1, 5, 5);
 
-        // Draw Cone
-        gl2.glTranslated(0, 0, height*3); // Move
-        gl2.glColor3f(1,0.25f,0);
-        if(filled) {
-            glut.glutSolidCone(1.5f,0.75f,5,5);
-        } else {
-            glut.glutWireCone(1.5f,0.75f,5,5);
-        }
+            // Draw Cone
+            gl2.glTranslated(0, 0, height*3); // Move
+            if(filled) {
+                glut.glutSolidCone(1.5f,0.75f,5,5);
+            } else {
+                glut.glutWireCone(1.5f,0.75f,5,5);
+            }
         gl2.glPopMatrix();
     }
 }
@@ -245,9 +232,9 @@ private class SubmarinePeriscope extends SubmarineComponent {
     @Override
     void drawNode (GL2 gl2, GLU glu, GLUquadric quadric, boolean filled){
         gl2.glPushMatrix();
-        gl2.glColor3f(SUBMARINE_PRIMARY.RED,SUBMARINE_PRIMARY.GREEN + 0.05f,SUBMARINE_PRIMARY.BLUE);
-        gl2.glScaled(radius/15, radius/15, height/2);
-        glu.gluCylinder(quadric, 1, 1, 1,8, 6);
+            Materials.setSubmarineSecondaryMaterial(gl2);
+            gl2.glScaled(radius/15, radius/15, height/2);
+            glu.gluCylinder(quadric, 1, 1, 1,8, 6);
         gl2.glPopMatrix();
     }
 }
@@ -261,15 +248,15 @@ private class SubmarinePropeller extends SubmarineComponent {
     @Override
     void drawNode(GL2 gl2, GLU glu, GLUquadric quadric, boolean filled) {
         gl2.glPushMatrix();
-        gl2.glColor3f(SUBMARINE_PRIMARY.RED,SUBMARINE_PRIMARY.GREEN + 0.05f,SUBMARINE_PRIMARY.BLUE);
-        gl2.glRotated(90, 1, 0, 0);
-        if(rotateRight) {
-            gl2.glRotated(propellerRotation, 0, 1, 0);
-        } else {
-            gl2.glRotated(-propellerRotation, 0, 1, 0);
-        }
-        gl2.glScaled(radius/5, radius/8, 1);
-        glu.gluSphere(quadric, 2*radius/3, 20, 20);
+            Materials.setSubmarineSecondaryMaterial(gl2);
+            gl2.glRotated(90, 1, 0, 0);
+            if(rotateRight) {
+                gl2.glRotated(propellerRotation, 0, 1, 0);
+            } else {
+                gl2.glRotated(-propellerRotation, 0, 1, 0);
+            }
+            gl2.glScaled(radius/5, radius/8, 1);
+            glu.gluSphere(quadric, 2*radius/3, 20, 20);
         gl2.glPopMatrix();
     }
 }
@@ -283,9 +270,9 @@ private class SubmarineSail extends SubmarineComponent {
     @Override
     void drawNode (GL2 gl2, GLU glu, GLUquadric quadric, boolean filled) {
         gl2.glPushMatrix();
-        gl2.glColor3f(SUBMARINE_PRIMARY.RED,SUBMARINE_PRIMARY.GREEN,SUBMARINE_PRIMARY.BLUE);
-        gl2.glScaled(radius, height, height);
-        glu.gluCylinder(quadric, radius, radius/1.5f, height*2,4, 4);
+            Materials.setSubmarinePrimaryMaterial(gl2);
+            gl2.glScaled(radius, height, height);
+            glu.gluCylinder(quadric, radius, radius/1.5f, height*2,4, 4);
         gl2.glPopMatrix();
     }
 }

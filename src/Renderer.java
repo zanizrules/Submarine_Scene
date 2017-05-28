@@ -22,6 +22,7 @@ import static com.jogamp.opengl.GL.GL_SRC_ALPHA;
 public class Renderer implements GLEventListener, KeyListener {
 	private GLU glu;
 	private GLUquadric quadric;
+	private Lighting lighting;
 	private Origin locator;
 	private Grid seaBed, seaSurface;
 	private Submarine submarine;
@@ -53,32 +54,12 @@ public class Renderer implements GLEventListener, KeyListener {
 				submarine.x, submarine.y, submarine.z, // Focus on the centre of the submarine
 				0.0, 1.0, 0.0);
 
-		 float[] spotLightPosition = {0, 0, 0, 1};
-		 float[] spotLightDirection = {0, -1, 0};
-
-		gl.glPushMatrix();
-
-		spotLightPosition[0] = (float) (submarine.x -(9f* submarine.SUBMARINE_RADIUS)/10f * Math.sin(Math.toRadians(submarine.submarineRotation)));
+		float[] spotLightPosition = {0, 0, 0, 1};
+		spotLightPosition[0] = submarine.x + 1.5f * (float) Math.sin(Math.toRadians(submarine.submarineRotation));
 		spotLightPosition[1] = submarine.y;
-		spotLightPosition[2] = (float) (submarine.z-(9f* submarine.SUBMARINE_RADIUS)/10f * Math.cos(Math.toRadians(submarine.submarineRotation)));
-		gl.glBegin(GL2.GL_LINES);
-		gl.glColor3f(0f, 0f, 1f);
-		gl.glVertex3f(spotLightPosition[0], spotLightPosition[1], spotLightPosition[2]);
-		gl.glVertex3f(spotLightPosition[0], spotLightPosition[1]-1, spotLightPosition[2]);
-		gl.glEnd();
+		spotLightPosition[2] = submarine.z + 1.5f * (float) Math.cos(Math.toRadians(submarine.submarineRotation));
 
-		gl.glLightf(GL2.GL_LIGHT2, GL2.GL_SPOT_CUTOFF, 10); // 45 = cutoff angle
-		gl.glLightfv(GL2.GL_LIGHT2, GL2.GL_POSITION, spotLightPosition, 0); // 0 INDICATES TO START AT POS 0
-		gl.glLightfv(GL2.GL_LIGHT2, GL2.GL_SPOT_DIRECTION, spotLightDirection, 0);
-
-		float diffuse[] = {0.8f, 1, 1, 1};
-		gl.glLightfv(GL2.GL_LIGHT2, GL2.GL_DIFFUSE, diffuse, 0);
-		// todo add ambient and specular
-
-		gl.glEnable(GL2.GL_LIGHT2);
-		gl.glPopMatrix();
-
-
+		lighting.drawSubmarineSpotLight(gl, spotLightPosition, submarine.submarineRotation);
 
 		// Draw origin locator
 		locator.draw(gl, glu, quadric, filled);
@@ -92,7 +73,12 @@ public class Renderer implements GLEventListener, KeyListener {
 		gl.glBlendFunc(GL_SRC_ALPHA, GL2.GL_ONE_MINUS_SRC_ALPHA);
 
 		seaBed.draw(gl, glu, quadric, filled);
-		submarine.draw(gl, glu, quadric, filled);
+
+		gl.glDisable(GL2.GL_COLOR_MATERIAL);
+			submarine.draw(gl, glu, quadric, filled);
+			Materials.clearMaterials(gl);
+		gl.glEnable(GL2.GL_COLOR_MATERIAL);
+
 		seaSurface.draw(gl, glu, quadric, filled);
 
 		gl.glDisable(GL_BLEND);
@@ -111,6 +97,7 @@ public class Renderer implements GLEventListener, KeyListener {
 		// Initialise all variables
 		glu = new GLU();
 		quadric = glu.gluNewQuadric();
+		lighting = new Lighting(gl);
 		locator = new Origin();
 		submarine = new Submarine(1);
 		seaBed = new Grid(SEABED_COLOUR, -SEA_HEIGHT/2);
@@ -119,35 +106,14 @@ public class Renderer implements GLEventListener, KeyListener {
 
 
 		// Enable lighting
-		lights(gl);
+		lighting.enableSceneLighting(gl);
 
 		// Setup the drawing area and shading mode
 		gl.glEnable(GL2.GL_DEPTH_TEST);
 		gl.glShadeModel(GL2.GL_SMOOTH);
 	}
 
-	private void lights(GL2 gl) {
-		float ambient[] = {0, 0, 0, 1};
-		float diffuse[] = {0.3f, 0.3f, 0.3f, 0.3f};
-		float specular[] = {1, 1, 1, 1};
-		float position0[] = {1, 1, 1, 0};
 
-		gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_POSITION, position0, 0);
-		gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_AMBIENT, ambient, 0);
-		gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_DIFFUSE, diffuse, 0);
-		gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_SPECULAR, specular, 0);
-
-		float position1[] = { -1, -1, -1, 0 };
-		gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_POSITION, position1, 0);
-		gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_AMBIENT, ambient, 0);
-		gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_DIFFUSE, diffuse, 0);
-		gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_SPECULAR, specular, 0);
-
-		gl.glEnable(GL2.GL_LIGHTING);
-		gl.glEnable(GL2.GL_LIGHT0);
-		gl.glEnable(GL2.GL_LIGHT1);
-		gl.glEnable(GL2.GL_COLOR_MATERIAL);
-	}
 
 	@Override
 	public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
