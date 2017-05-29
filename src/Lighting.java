@@ -56,15 +56,33 @@ class Lighting {
             gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_DIFFUSE, diffuse, 0);
             gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_SPECULAR, specular, 0);
 
-            float position1[] = { -1, -1, -1, 0 };
-            gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_POSITION, position1, 0);
-            gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_AMBIENT, ambient, 0);
-            gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_DIFFUSE, diffuse, 0);
-            gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_SPECULAR, specular, 0);
+            enableSunLighting(gl, 0.5f);
 
             gl.glEnable(GL2.GL_LIGHTING);
             gl.glEnable(GL2.GL_LIGHT0);
-            gl.glEnable(GL2.GL_LIGHT1);
             gl.glEnable(GL2.GL_COLOR_MATERIAL);
+    }
+
+    private void enableSunLighting(GL2 gl, float darkness) {
+        float ambient[] = {darkness, darkness, darkness, 1};
+        float diffuse[] = {darkness, darkness, darkness, 1};
+        float specular[] = {0.5f, 0.5f, 0.5f, 1};
+
+        float position1[] = { 0, 8, 0, 0};
+        float direction1[] = {0, -1, 0};
+        gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_POSITION, position1, 0);
+        gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_SPOT_DIRECTION, direction1, 0);
+        gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_AMBIENT, ambient, 0);
+        gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_DIFFUSE, diffuse, 0);
+        gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_SPECULAR, specular, 0);
+    }
+
+    void triggerSunLight(GL2 gl2, boolean turnOn, float darkness) {
+        if(turnOn) {
+            enableSunLighting(gl2, darkness);
+            gl2.glEnable(GL2.GL_LIGHT1);
+        } else {
+            gl2.glDisable(GL2.GL_LIGHT1);
+        }
     }
 }

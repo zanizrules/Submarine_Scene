@@ -30,11 +30,9 @@ public class Renderer implements GLEventListener, KeyListener {
 
 	private static final double FIELD_OF_VIEW = 30, NEAR_CLIPPING = 0.1, FAR_CLIPPING = 50;
 	static final float SEA_HEIGHT = 10;
-
-	private static final ColourRGB SEABED_COLOUR = new ColourRGB(0.66f,0.47f, 0.37f);
-	private static final ColourRGB SEASURFACE_COLOUR = new ColourRGB(0.13f,0.7f, 0.67f, 0.5f);
-
 	private boolean filled;
+	private float dayNightCycle = 0;
+	private float timeIncrement = 0.0005f;
 
 	@Override
 	public void display(GLAutoDrawable drawable) {
@@ -54,11 +52,17 @@ public class Renderer implements GLEventListener, KeyListener {
 				submarine.x, submarine.y, submarine.z, // Focus on the centre of the submarine
 				0.0, 1.0, 0.0);
 
+		// Draw sunlight
+		if(dayNightCycle > 0.7f || dayNightCycle < -0.2f) { // 1.1f allows for a longer time to be spent at pitch black
+			timeIncrement *= -1;
+		} dayNightCycle += timeIncrement; // increment day/night cycle
+		lighting.triggerSunLight(gl, submarine.y > 4, -0.2f);
+
+		// Draw Sub Spotlight
 		float[] spotLightPosition = {0, 0, 0, 1};
 		spotLightPosition[0] = submarine.x + 1.5f * (float) Math.sin(Math.toRadians(submarine.submarineRotation));
 		spotLightPosition[1] = submarine.y;
 		spotLightPosition[2] = submarine.z + 1.5f * (float) Math.cos(Math.toRadians(submarine.submarineRotation));
-
 		lighting.drawSubmarineSpotLight(gl, spotLightPosition, submarine.submarineRotation);
 
 		// Draw origin locator
