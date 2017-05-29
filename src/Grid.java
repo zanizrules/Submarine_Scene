@@ -1,6 +1,10 @@
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.glu.GLU;
 import com.jogamp.opengl.glu.GLUquadric;
+import com.jogamp.opengl.util.texture.Texture;
+import com.jogamp.opengl.util.texture.TextureIO;
+
+import java.io.IOException;
 
 /**
  * Author: Shane Birdsall
@@ -10,25 +14,42 @@ import com.jogamp.opengl.glu.GLUquadric;
  * Within the Submarine Scene grids are used for the seabed and sea surface.
  */
 public class Grid implements Drawable {
-    private ColourRGB gridColour;
     float height; // Grid location in the Y axis
+    private Texture gridTexture;
 
     // each individual grid is 1 unit;
     private int gridSize; // if 50 then there are 50 1x1 squares
 
-    Grid(ColourRGB colour, float yPos) {
-        this(colour, yPos, 20);
+    Grid(float yPos, String textureFile) {
+        this(yPos, 20, textureFile);
     }
 
-    private Grid(ColourRGB colour, float yPos, int gridSize) {
-        gridColour = colour;
+    private Grid(float yPos, int gridSize, String textureFile) {
         height = yPos;
         this.gridSize = gridSize;
+        try {
+            setGridTexture(textureFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+    }
+
+    private void setGridTexture(String file) throws IOException {
+       gridTexture = TextureIO.newTexture(this.getClass().getResourceAsStream(file + ".jpg"), true, "jpg");
     }
 
     @Override
     public void draw(GL2 gl2, GLU glu, GLUquadric quadric, boolean filled) {
-        gl2.glColor4f(gridColour.RED, gridColour.GREEN, gridColour.BLUE, gridColour.ALPHA);
+        gridTexture.enable(gl2);
+        gridTexture.bind(gl2);
+
+        /* Uses s,t modulo 1.
+        Texture coordinates outside the range 0.0 - 1.0 will produce duplicates of the texture */
+        gridTexture.setTexParameteri(gl2, GL2.GL_TEXTURE_WRAP_S, GL2.GL_REPEAT);
+        gridTexture.setTexParameteri(gl2, GL2.GL_TEXTURE_WRAP_T, GL2.GL_REPEAT);
+
+        gl2.glColor4f(1,1,1,0.9f);
 
         /* There are four equal sections in each 2D grid, and as such I have used gridSize
            to represent the length of a single quadrant. The entire grid is constructed by
@@ -41,19 +62,24 @@ public class Grid implements Drawable {
                 gl2.glBegin(filled ? GL2.GL_QUADS : GL2.GL_LINE_LOOP); // Solid or Wireframe
 
                     gl2.glNormal3d(0,1,0);
+                    gl2.glTexCoord2d(2, 1);
                     gl2.glVertex3d(i,height,j);
 
                     gl2.glNormal3d(0,1,0);
+                    gl2.glTexCoord2d(2, 2);
                     gl2.glVertex3d(i + 1,height,j);
 
                     gl2.glNormal3d(0,1,0);
+                    gl2.glTexCoord2d(1, 2);
                     gl2.glVertex3d(i + 1,height,j + 1);
 
                     gl2.glNormal3d(0,1,0);
+                    gl2.glTexCoord2d(1, 1);
                     gl2.glVertex3d(i,height,j + 1);
 
                 gl2.glEnd();
             }
         }
+        gridTexture.disable(gl2);
     }
 }

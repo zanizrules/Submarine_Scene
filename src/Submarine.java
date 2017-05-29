@@ -16,8 +16,6 @@ public class Submarine implements Drawable {
     private final double SUBMARINE_RADIUS;
     private final double SUBMARINE_HEIGHT;
     private static final double ROTATION_SPEED = 1, PROPELLER_ROTATION_SPEED = 6, MOVEMENT_SPEED = 0.1, TILT_AMOUNT = 10;
-//    private static final ColourRGB SUBMARINE_PRIMARY = new ColourRGB(1,0.2f,0);
-//    private static final ColourRGB SUBMARINE_SECONDARY = new ColourRGB(1,0.05f,0);
 
     private SubmarineComponent root;
     float x, y, z, submarineRotation, propellerRotation;
@@ -128,7 +126,7 @@ public class Submarine implements Drawable {
                 y -= MOVEMENT_SPEED / 2;
             }
         } else if (verticalMovementState.equals(SUBMARINE_STATE.SURFACING)) { // Handle surfacing movement
-            if (y < (Renderer.SEA_HEIGHT / 2) - (SUBMARINE_HEIGHT / 2)) {
+            if (y < (Renderer.SEA_HEIGHT / 2) - SUBMARINE_HEIGHT) {
                 y += MOVEMENT_SPEED / 2;
             }
         } else {

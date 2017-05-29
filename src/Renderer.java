@@ -100,10 +100,8 @@ public class Renderer implements GLEventListener, KeyListener {
 		lighting = new Lighting(gl);
 		locator = new Origin();
 		submarine = new Submarine(1);
-		seaBed = new Grid(SEABED_COLOUR, -SEA_HEIGHT/2);
-		seaSurface = new Grid(SEASURFACE_COLOUR, SEA_HEIGHT/2);
-
-
+		seaBed = new Grid(-SEA_HEIGHT/2, "images/greenSeaBed");
+		seaSurface = new Grid(SEA_HEIGHT/2, "images/PortofTaganrog");
 
 		// Enable lighting
 		lighting.enableSceneLighting(gl);
@@ -112,8 +110,6 @@ public class Renderer implements GLEventListener, KeyListener {
 		gl.glEnable(GL2.GL_DEPTH_TEST);
 		gl.glShadeModel(GL2.GL_SMOOTH);
 	}
-
-
 
 	@Override
 	public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
