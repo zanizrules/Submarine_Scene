@@ -20,9 +20,9 @@ class Materials {
     private static final float highShine[] = {20};
 
     // Spotlight material
-    private static final float[] lightAmbiance = { 1, 0.75f, 0, 0.5f};
-    private static final float[] lightEmission = {1, 0.75f, 0, 1};
-    private static final float[] lightDiffuse = { 1, 0.75f, 0, 0.2f};
+    private static final float[] lightAmbiance = { 1, 0.7f, 0, 0.01f};
+    private static final float[] lightEmission = {1, 0.7f, 0, 1};
+    private static final float[] lightDiffuse = { 1, 0.7f, 0, 0.01f};
 
     static void setSubmarinePrimaryMaterial(GL2 gl2) {
         setMaterial(gl2, orangeAmbiance, orangeDiffuse, noMaterial, noShine, noMaterial);
@@ -38,6 +38,11 @@ class Materials {
 
     static void clearMaterials(GL2 gl2) {
         setMaterial(gl2, noMaterial, noMaterial, noMaterial, noShine, noMaterial);
+    }
+
+    static void setMaterial(GL2 gl2, ColourRGB colours) {
+        float[] colour = {colours.RED, colours.GREEN, colours.BLUE, 1};
+        setMaterial(gl2, colour, colour, colour, noMaterial, noMaterial);
     }
 
     private static void setMaterial(GL2 gl2, float[] ambiance, float[] diffuse,

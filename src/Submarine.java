@@ -179,7 +179,6 @@ private class SubmarineLight extends SubmarineComponent {
 
     @Override
     void drawNode(GL2 gl2, GLU glu, GLUquadric quadric, boolean filled) {
-        gl2.glEnable(Lighting.SUBMARINE_SPOTLIGHT);
         gl2.glPushMatrix();
             Materials.setSubmarineLightMaterial(gl2);
             gl2.glRotated(-75,1,0,0);
@@ -189,7 +188,6 @@ private class SubmarineLight extends SubmarineComponent {
                 glut.glutWireCone(radius*1.75, height*5,20,10);
             }
         gl2.glPopMatrix();
-        gl2.glDisable(Lighting.SUBMARINE_SPOTLIGHT);
     }
 }
 

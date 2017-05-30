@@ -34,6 +34,10 @@ public class Renderer implements GLEventListener, KeyListener {
 	private float dayNightCycle = 0;
 	private float timeIncrement = 0.0005f;
 
+	private static final float fogDensity = 0.05f;
+	private static final float[] waterColour = new float[]{0, 0.45f, 0.4f};
+	private int count = 0;
+
 	@Override
 	public void display(GLAutoDrawable drawable) {
 		GL2 gl = drawable.getGL().getGL2();
@@ -44,10 +48,16 @@ public class Renderer implements GLEventListener, KeyListener {
 		gl.glLoadIdentity();
 		// Set viewpoint depending on user input
 
+		//todo fix
+		gl.glClearColor(waterColour[0], waterColour[1], waterColour[2], 0.5f);
+		gl.glClear(16640);
+		gl.glBlendFunc(770, 771);
+		gl.glMatrixMode(5888);
+
 		// Setup camera
-		camX = submarine.x - 6 * Math.sin(Math.toRadians(submarine.submarineRotation));
-		camY = submarine.y+3;
-		camZ = submarine.z - 6 * Math.cos(Math.toRadians(submarine.submarineRotation));
+		camX = submarine.x - 4.5 * Math.sin(Math.toRadians(submarine.submarineRotation));
+		camY = submarine.y + 2.25;
+		camZ = submarine.z - 4.5 * Math.cos(Math.toRadians(submarine.submarineRotation));
 		glu.gluLookAt(camX, camY, camZ, // Camera positioned behind the submarine
 				submarine.x, submarine.y, submarine.z, // Focus on the centre of the submarine
 				0.0, 1.0, 0.0);
@@ -56,14 +66,14 @@ public class Renderer implements GLEventListener, KeyListener {
 		if(dayNightCycle > 0.7f || dayNightCycle < -0.2f) { // 1.1f allows for a longer time to be spent at pitch black
 			timeIncrement *= -1;
 		} dayNightCycle += timeIncrement; // increment day/night cycle
-		lighting.triggerSunLight(gl, submarine.y > 4, -0.2f);
+		lighting.triggerSunLight(gl, submarine.y > 2, dayNightCycle);
 
 		// Draw Sub Spotlight
 		float[] spotLightPosition = {0, 0, 0, 1};
 		spotLightPosition[0] = submarine.x + 1.5f * (float) Math.sin(Math.toRadians(submarine.submarineRotation));
 		spotLightPosition[1] = submarine.y;
 		spotLightPosition[2] = submarine.z + 1.5f * (float) Math.cos(Math.toRadians(submarine.submarineRotation));
-		lighting.drawSubmarineSpotLight(gl, spotLightPosition, submarine.submarineRotation);
+		lighting.drawSubmarineSpotLight(gl, spotLightPosition);
 
 		// Draw origin locator
 		locator.draw(gl, glu, quadric, filled);
@@ -87,6 +97,12 @@ public class Renderer implements GLEventListener, KeyListener {
 
 		gl.glDisable(GL_BLEND);
 		gl.glFlush();
+
+		count++;
+		if(count % 50 == 0) {
+			count = 0;
+			seaSurface.animateTexture();
+		}
 	}
 
 	@Override
@@ -104,7 +120,7 @@ public class Renderer implements GLEventListener, KeyListener {
 		lighting = new Lighting(gl);
 		locator = new Origin();
 		submarine = new Submarine(1);
-		seaBed = new Grid(-SEA_HEIGHT/2, "images/greenSeaBed");
+		seaBed = new Grid(-SEA_HEIGHT/2, "images/seaFloor");
 		seaSurface = new Grid(SEA_HEIGHT/2, "images/PortofTaganrog");
 
 		// Enable lighting
@@ -113,6 +129,16 @@ public class Renderer implements GLEventListener, KeyListener {
 		// Setup the drawing area and shading mode
 		gl.glEnable(GL2.GL_DEPTH_TEST);
 		gl.glShadeModel(GL2.GL_SMOOTH);
+
+		// Enable Fog
+		setUpFog(gl, fogDensity, waterColour);
+	}
+
+	private void setUpFog(GL2 gl, float fogDensity, float[] colour) {
+		gl.glEnable(GL2.GL_FOG);
+		gl.glFogfv(GL2.GL_FOG_COLOR, colour, 0);
+		gl.glFogf(GL2.GL_FOG_MODE, GL2.GL_EXP2);
+		gl.glFogf(GL2.GL_FOG_DENSITY, fogDensity);
 	}
 
 	@Override
