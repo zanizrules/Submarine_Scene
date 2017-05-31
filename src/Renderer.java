@@ -41,18 +41,13 @@ public class Renderer implements GLEventListener, KeyListener {
 	@Override
 	public void display(GLAutoDrawable drawable) {
 		GL2 gl = drawable.getGL().getGL2();
+        gl.glClearColor(waterColour[0], waterColour[1], waterColour[2], 0.5f);
 		gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
 
 		// Ensure matrix mode is set to model view
 		gl.glMatrixMode(GL2.GL_MODELVIEW);
 		gl.glLoadIdentity();
 		// Set viewpoint depending on user input
-
-		//todo fix
-		gl.glClearColor(waterColour[0], waterColour[1], waterColour[2], 0.5f);
-		gl.glClear(16640);
-		gl.glBlendFunc(770, 771);
-		gl.glMatrixMode(5888);
 
 		// Setup camera
 		camX = submarine.x - 4.5 * Math.sin(Math.toRadians(submarine.submarineRotation));
@@ -63,10 +58,10 @@ public class Renderer implements GLEventListener, KeyListener {
 				0.0, 1.0, 0.0);
 
 		// Draw sunlight
-		if(dayNightCycle > 0.7f || dayNightCycle < -0.2f) { // 1.1f allows for a longer time to be spent at pitch black
+		if(dayNightCycle > 0.7f || dayNightCycle < -0) { // 1.1f allows for a longer time to be spent at pitch black
 			timeIncrement *= -1;
 		} dayNightCycle += timeIncrement; // increment day/night cycle
-		lighting.triggerSunLight(gl, submarine.y > 2, dayNightCycle);
+		lighting.triggerSunLight(gl, submarine.y > 2.75f, dayNightCycle);
 
 		// Draw Sub Spotlight
 		float[] spotLightPosition = {0, 0, 0, 1};
