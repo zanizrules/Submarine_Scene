@@ -10,7 +10,7 @@ import com.jogamp.opengl.GL2;
 class Lighting {
     private static final int SUBMARINE_SPOTLIGHT = GL2.GL_LIGHT3;
     private static final float[] SUBMARINE_SPOTLIGHT_DIRECTION = {0, -0.2f, 0};
-    private static final float SUBMARINE_SPOTLIGHT_ANGLE = 35;
+    private static final float SUBMARINE_SPOTLIGHT_ANGLE = 60;
     private static final float SUBMARINE_SPOTLIGHT_EXPONENT = 5;
 
     Lighting(GL2 gl) {
@@ -26,10 +26,10 @@ class Lighting {
 
     void drawSubmarineSpotLight(GL2 gl, float[] positions) {
         gl.glLightfv(SUBMARINE_SPOTLIGHT, GL2.GL_POSITION, positions, 0); // 0 INDICATES TO START AT POS 0
-        if(positions[1] < -1) {
+        if(positions[1] < 3) {
             gl.glEnable(SUBMARINE_SPOTLIGHT);
         } else {
-            gl.glDisable(SUBMARINE_SPOTLIGHT);
+            gl.glDisable(SUBMARINE_SPOTLIGHT); // No point having it on when you cant see it
         }
     }
 
@@ -67,6 +67,7 @@ class Lighting {
 
     void triggerSunLight(GL2 gl2, boolean turnOn, float darkness) {
         if(turnOn) {
+            if(darkness < 0) { darkness = 0; }
             enableSunLighting(gl2, darkness);
             gl2.glEnable(GL2.GL_LIGHT1);
         } else {

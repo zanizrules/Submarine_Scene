@@ -17,14 +17,14 @@ public class Submarine implements Drawable {
     final double SUBMARINE_HEIGHT;
     private static final double ROTATION_SPEED = 1, PROPELLER_ROTATION_SPEED = 6, MOVEMENT_SPEED = 0.03, TILT_AMOUNT = 10;
 
-    private SubmarineComponent root;
+    private final SubmarineComponent root;
     float x, y, z, submarineRotation, propellerRotation;
     private SUBMARINE_STATE turningState;
     private SUBMARINE_STATE verticalMovementState;
     private SUBMARINE_STATE horizontalMovementState;
 
     private boolean rotateRight; // Used to determine which way the propeller should rotate
-    private GLUT glut = new GLUT();
+    private final GLUT glut = new GLUT();
 
     boolean isDiving() {
         return verticalMovementState.equals(SUBMARINE_STATE.DIVING);
@@ -125,7 +125,7 @@ public class Submarine implements Drawable {
 
         // Vertical Movement
         if (verticalMovementState.equals(SUBMARINE_STATE.DIVING)) { // Handle diving movement
-            if (y > (-Renderer.SEA_HEIGHT / 2) + (SUBMARINE_HEIGHT * 2)) {
+            if (y > (-Renderer.SEA_HEIGHT / 2) + (SUBMARINE_HEIGHT * 4)) {
                 y -= MOVEMENT_SPEED / 2;
             }
         } else if (verticalMovementState.equals(SUBMARINE_STATE.SURFACING)) { // Handle surfacing movement
@@ -195,7 +195,7 @@ private class SubmarineLight extends SubmarineComponent {
 
 private class SubmarineConnector extends SubmarineComponent {
 
-    private GLUT glut;
+    private final GLUT glut;
 
     SubmarineConnector(double radius, double height, ROTATION_AXIS axis) {
         super(radius, height, axis);

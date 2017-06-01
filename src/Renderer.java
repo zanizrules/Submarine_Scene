@@ -22,7 +22,7 @@ import static com.jogamp.opengl.GL.GL_SRC_ALPHA;
  * Renderer is the Main class responsible for setting up the view
  * and calling all draw functions through the use of a fps timer.
  */
-public class Renderer implements GLEventListener, KeyListener, Runnable {
+class Renderer implements GLEventListener, KeyListener, Runnable {
 	private GLU glu;
 	private GLUquadric quadric;
 	private Lighting lighting;
@@ -31,7 +31,7 @@ public class Renderer implements GLEventListener, KeyListener, Runnable {
 	private Submarine submarine;
 	private double camX, camY, camZ;
 
-	private static final double FIELD_OF_VIEW = 30, NEAR_CLIPPING = 0.1, FAR_CLIPPING = 50;
+	private static final double FIELD_OF_VIEW = 70, NEAR_CLIPPING = 0.1, FAR_CLIPPING = 50;
 	static final float SEA_HEIGHT = 10;
 	private boolean filled;
 	private float dayNightCycle = 0;
@@ -51,7 +51,7 @@ public class Renderer implements GLEventListener, KeyListener, Runnable {
 	@Override
 	public void display(GLAutoDrawable drawable) {
 		GL2 gl = drawable.getGL().getGL2();
-        gl.glClearColor(waterColour[0], waterColour[1], waterColour[2], 0.5f);
+		gl.glClearColor(waterColour[0], waterColour[1], waterColour[2], 0.5f);
 		gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
 
 		// Ensure matrix mode is set to model view
@@ -61,8 +61,8 @@ public class Renderer implements GLEventListener, KeyListener, Runnable {
 
 		// Adjust camera to avoid seeing the change between above and below the water
 		float camAdjustment = 0;
-		if(submarine.y > 2.75f && submarine.y < 2.85f) {
-			camAdjustment = 0.1f;
+		if(submarine.y > 2.65f && submarine.y < 2.9f) {
+			camAdjustment = 0.25f;
 		}
 
 		// Setup camera
@@ -82,11 +82,11 @@ public class Renderer implements GLEventListener, KeyListener, Runnable {
 		}
 
 		// Draw sunlight
-		if(dayNightCycle > 0.8f || dayNightCycle < -0.15f) {
+		if(dayNightCycle > 0.8f || dayNightCycle < -0.3f) {
 			timeIncrement *= -1;
 		} dayNightCycle += timeIncrement; // increment day/night cycle
 
-		lighting.triggerSunLight(gl, submarine.y > 2.8f, dayNightCycle);
+		lighting.triggerSunLight(gl, submarine.y >= 2.65f, dayNightCycle);
 
 		// Draw Sub Spotlight
 		float[] spotLightPosition = {0, 0, 0, 1};
@@ -204,7 +204,6 @@ public class Renderer implements GLEventListener, KeyListener, Runnable {
 		System.out.println("Sea Depth: " + (Math.abs(seaBed.height) + Math.abs(seaSurface.height)));
 		System.out.println(filled ? "Wireframe Mode: Off" : "Wireframe Mode: On");
 		System.out.println("Number of bubbles : " + bubbles.size());
-
 	}
 
 	public static void main(String[] args) {

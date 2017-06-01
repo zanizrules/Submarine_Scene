@@ -20,9 +20,9 @@ class Materials {
     private static final float highShine[] = {20};
 
     // Spotlight material
-    private static final float[] lightAmbiance = { 1, 0.7f, 0, 0.01f};
+    private static final float[] lightAmbiance = { 1, 0.7f, 0, 0.02f};
     private static final float[] lightEmission = {1, 0.7f, 0, 1};
-    private static final float[] lightDiffuse = { 1, 0.7f, 0, 0.01f};
+    private static final float[] lightDiffuse = { 1, 0.7f, 0, 0.02f};
 
     // Bubble material
     private static final float[] bubbleAmbiance = { 0.4f, 0.65f, 1, 0.3f};

@@ -3,7 +3,6 @@ import com.jogamp.opengl.glu.GLU;
 import com.jogamp.opengl.glu.GLUquadric;
 import com.jogamp.opengl.util.texture.Texture;
 import com.jogamp.opengl.util.texture.TextureIO;
-import org.w3c.dom.css.RGBColor;
 
 import java.io.IOException;
 
@@ -15,14 +14,14 @@ import java.io.IOException;
  * Within the Submarine Scene grids are used for the seabed and sea surface.
  */
 public class Grid implements Drawable {
-    float height; // Grid location in the Y axis
+    final float height; // Grid location in the Y axis
     private Texture gridTexture;
     private float textureOffSet = 0;
     private boolean textured;
     private ColourRGB gridColour;
 
     // each individual grid is 1 unit;
-    private int gridSize; // if 50 then there are 50 1x1 squares
+    private final int gridSize; // if 50 then there are 50 1x1 squares
 
     Grid(float yPos, ColourRGB colour) {
         this(yPos, 50, null, colour);
@@ -70,7 +69,7 @@ public class Grid implements Drawable {
             gridTexture.setTexParameteri(gl2, GL2.GL_TEXTURE_WRAP_S, GL2.GL_REPEAT);
             gridTexture.setTexParameteri(gl2, GL2.GL_TEXTURE_WRAP_T, GL2.GL_REPEAT);
 
-            gl2.glColor4f(1,1,1,0.95f);
+            gl2.glColor4f(1,1,1,0.85f);
         }
 
         /* There are four equal sections in each 2D grid, and as such I have used gridSize

@@ -12,5 +12,4 @@ class ColourRGB {
         BLUE = b;
         ALPHA = a;
     }
-    ColourRGB(float r, float g, float b) { this(r,g,b, 1.0f); }
 }
