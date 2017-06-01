@@ -24,6 +24,11 @@ class Materials {
     private static final float[] lightEmission = {1, 0.7f, 0, 1};
     private static final float[] lightDiffuse = { 1, 0.7f, 0, 0.01f};
 
+    // Bubble material
+    private static final float[] bubbleAmbiance = { 0.4f, 0.65f, 1, 0.3f};
+    private static final float[] bubbleDiffuse = { 0.4f, 0.65f, 1, 0.3f};
+    private static final float[] bubbleEmission = {0.075f, 0.1f, 0.15f, 0.3f};
+
     static void setSubmarinePrimaryMaterial(GL2 gl2) {
         setMaterial(gl2, orangeAmbiance, orangeDiffuse, noMaterial, noShine, noMaterial);
     }
@@ -34,6 +39,10 @@ class Materials {
 
     static void setSubmarineLightMaterial(GL2 gl2) {
         setMaterial(gl2, lightAmbiance, lightDiffuse, whiteSpecular, highShine, lightEmission);
+    }
+
+    static void setBubbleMaterial(GL2 gl2) {
+        setMaterial(gl2, bubbleAmbiance, bubbleDiffuse, whiteSpecular, highShine, bubbleEmission);
     }
 
     static void clearMaterials(GL2 gl2) {

@@ -8,6 +8,9 @@ import com.jogamp.opengl.util.FPSAnimator;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Queue;
+import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.jogamp.opengl.GL.GL_BLEND;
 import static com.jogamp.opengl.GL.GL_SRC_ALPHA;
@@ -19,7 +22,7 @@ import static com.jogamp.opengl.GL.GL_SRC_ALPHA;
  * Renderer is the Main class responsible for setting up the view
  * and calling all draw functions through the use of a fps timer.
  */
-public class Renderer implements GLEventListener, KeyListener {
+public class Renderer implements GLEventListener, KeyListener, Runnable {
 	private GLU glu;
 	private GLUquadric quadric;
 	private Lighting lighting;
@@ -32,11 +35,18 @@ public class Renderer implements GLEventListener, KeyListener {
 	static final float SEA_HEIGHT = 10;
 	private boolean filled;
 	private float dayNightCycle = 0;
-	private float timeIncrement = 0.0005f;
+	private float timeIncrement = 0.00075f;
 
-	private static final float fogDensity = 0.05f;
+	private static final float fogDensity = 0.1f;
 	private static final float[] waterColour = new float[]{0, 0.45f, 0.4f};
 	private int count = 0;
+
+	private static final int TIME_BETWEEN_NEW_BUBBLES = 50;
+	private static final int MAX_BUBBLES = 50;
+	private static final Random rand = new Random();
+	private Queue<Bubble> bubbles;
+	private Thread bubbleThread;
+	private boolean threadRunning;
 
 	@Override
 	public void display(GLAutoDrawable drawable) {
@@ -49,19 +59,34 @@ public class Renderer implements GLEventListener, KeyListener {
 		gl.glLoadIdentity();
 		// Set viewpoint depending on user input
 
+		// Adjust camera to avoid seeing the change between above and below the water
+		float camAdjustment = 0;
+		if(submarine.y > 2.75f && submarine.y < 2.85f) {
+			camAdjustment = 0.1f;
+		}
+
 		// Setup camera
 		camX = submarine.x - 4.5 * Math.sin(Math.toRadians(submarine.submarineRotation));
-		camY = submarine.y + 2.25;
+		camY = submarine.y + 2.25 + camAdjustment;
 		camZ = submarine.z - 4.5 * Math.cos(Math.toRadians(submarine.submarineRotation));
 		glu.gluLookAt(camX, camY, camZ, // Camera positioned behind the submarine
 				submarine.x, submarine.y, submarine.z, // Focus on the centre of the submarine
 				0.0, 1.0, 0.0);
 
+		// Draw bubbles
+		for(Bubble bub : bubbles) {
+			if (bub.y > 5.5f || bub.transparency < 0.001f || bub.radius < 0.001f) {
+				bubbles.remove(bub);
+			}
+			bub.draw(gl, glu, quadric, filled);
+		}
+
 		// Draw sunlight
-		if(dayNightCycle > 0.7f || dayNightCycle < -0) { // 1.1f allows for a longer time to be spent at pitch black
+		if(dayNightCycle > 0.8f || dayNightCycle < -0.15f) {
 			timeIncrement *= -1;
 		} dayNightCycle += timeIncrement; // increment day/night cycle
-		lighting.triggerSunLight(gl, submarine.y > 2.75f, dayNightCycle);
+
+		lighting.triggerSunLight(gl, submarine.y > 2.8f, dayNightCycle);
 
 		// Draw Sub Spotlight
 		float[] spotLightPosition = {0, 0, 0, 1};
@@ -127,6 +152,9 @@ public class Renderer implements GLEventListener, KeyListener {
 
 		// Enable Fog
 		setUpFog(gl, fogDensity, waterColour);
+
+		// Setup bubble queue
+		bubbles = new ConcurrentLinkedQueue<>();
 	}
 
 	private void setUpFog(GL2 gl, float fogDensity, float[] colour) {
@@ -175,6 +203,8 @@ public class Renderer implements GLEventListener, KeyListener {
 		System.out.println("\n--- Other ---");
 		System.out.println("Sea Depth: " + (Math.abs(seaBed.height) + Math.abs(seaSurface.height)));
 		System.out.println(filled ? "Wireframe Mode: Off" : "Wireframe Mode: On");
+		System.out.println("Number of bubbles : " + bubbles.size());
+
 	}
 
 	public static void main(String[] args) {
@@ -239,6 +269,14 @@ public class Renderer implements GLEventListener, KeyListener {
 			submarine.changeVerticalMovementState(SUBMARINE_STATE.SURFACING);
 		} else if(key == KeyEvent.VK_DOWN) {
 			submarine.changeVerticalMovementState(SUBMARINE_STATE.DIVING);
+			startBubbleThread();
+		}
+	}
+
+	private synchronized void startBubbleThread() {
+		if(bubbleThread == null || !threadRunning) {
+			bubbleThread = new Thread(this);
+			bubbleThread.start();
 		}
 	}
 
@@ -257,5 +295,37 @@ public class Renderer implements GLEventListener, KeyListener {
 		} else if(key == KeyEvent.VK_UP | key == KeyEvent.VK_DOWN) {
 			submarine.changeVerticalMovementState(SUBMARINE_STATE.IDLE);
 		}
+	}
+
+	@Override
+	public void run() { // Bubbles Thread
+		threadRunning = true;
+		while (submarine.isDiving()) {
+			if(bubbles.size() < MAX_BUBBLES) {
+				// Generate a random bubble
+				float trans = rand.nextFloat() * (0.9f) + 0.1f;
+				float rad = rand.nextFloat() * (0.06f - 0.01f) + 0.01f;
+				float xFactor = rand.nextFloat() * (2.5f - 1.5f) + 1.5f; // Vary where the bubble starts
+				float zFactor = rand.nextFloat() * (2.5f - 1.5f) + 1.5f; // Vary where the bubble starts
+				float yFactor = rand.nextFloat() * (2 - 0.3f) + 0.3f; // Vary where the bubble starts
+				float x = submarine.x -  (float)
+						((xFactor*submarine.SUBMARINE_RADIUS) * Math.sin(Math.toRadians(submarine.submarineRotation)));
+				float z = submarine.z -  (float)
+						((zFactor*submarine.SUBMARINE_RADIUS) * Math.cos(Math.toRadians(submarine.submarineRotation)));
+				float y = submarine.y + yFactor * (float) submarine.SUBMARINE_HEIGHT;
+
+				float speed = rand.nextFloat() * (0.025f - 0.005f) + 0.005f;
+				bubbles.add(new Bubble(trans, rad, x, y, z, speed));
+				try {
+					Thread.sleep(TIME_BETWEEN_NEW_BUBBLES);
+				} catch (InterruptedException ignored) {}
+			}
+			for (Bubble bub : bubbles) {
+				if (bub.y > 5.5f || bub.transparency < 0.001f || bub.radius < 0.001f) {
+					bubbles.remove(bub);
+				}
+			}
+		}
+		threadRunning = false;
 	}
 }

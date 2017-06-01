@@ -70,7 +70,7 @@ public class Grid implements Drawable {
             gridTexture.setTexParameteri(gl2, GL2.GL_TEXTURE_WRAP_S, GL2.GL_REPEAT);
             gridTexture.setTexParameteri(gl2, GL2.GL_TEXTURE_WRAP_T, GL2.GL_REPEAT);
 
-            gl2.glColor4f(1,1,1,0.9f);
+            gl2.glColor4f(1,1,1,0.95f);
         }
 
         /* There are four equal sections in each 2D grid, and as such I have used gridSize

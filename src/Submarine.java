@@ -13,9 +13,9 @@ import com.jogamp.opengl.util.gl2.GLUT;
  */
 public class Submarine implements Drawable {
 
-    private final double SUBMARINE_RADIUS;
-    private final double SUBMARINE_HEIGHT;
-    private static final double ROTATION_SPEED = 1, PROPELLER_ROTATION_SPEED = 6, MOVEMENT_SPEED = 0.1, TILT_AMOUNT = 10;
+    final double SUBMARINE_RADIUS;
+    final double SUBMARINE_HEIGHT;
+    private static final double ROTATION_SPEED = 1, PROPELLER_ROTATION_SPEED = 6, MOVEMENT_SPEED = 0.03, TILT_AMOUNT = 10;
 
     private SubmarineComponent root;
     float x, y, z, submarineRotation, propellerRotation;
@@ -26,6 +26,9 @@ public class Submarine implements Drawable {
     private boolean rotateRight; // Used to determine which way the propeller should rotate
     private GLUT glut = new GLUT();
 
+    boolean isDiving() {
+        return verticalMovementState.equals(SUBMARINE_STATE.DIVING);
+    }
 
     Submarine(float size) {
         SUBMARINE_RADIUS = size * 0.4;
@@ -129,10 +132,9 @@ public class Submarine implements Drawable {
             if (y < (Renderer.SEA_HEIGHT / 2) - SUBMARINE_HEIGHT) {
                 y += MOVEMENT_SPEED / 2;
             }
-        } else {
-            if (horizontalMovementState != SUBMARINE_STATE.IDLE || turningState != SUBMARINE_STATE.IDLE) {
-                propellerRotation += PROPELLER_ROTATION_SPEED; // Rotate propeller when turning or moving
-            }
+        }
+        if(horizontalMovementState != SUBMARINE_STATE.IDLE || turningState != SUBMARINE_STATE.IDLE) {
+            propellerRotation += PROPELLER_ROTATION_SPEED; // Rotate propeller when turning or moving
         }
 
         // Horizontal Movement
